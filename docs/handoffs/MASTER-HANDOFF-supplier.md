@@ -156,7 +156,7 @@ Non-blocking items are for the pitch and do not hold the build.
 2. **WhatsApp recipient limit and business verification:** the owner checks these on the Meta dashboard. Not blocking; the test number works for the three team phones.
 3. **Meta connection (side task):** no Meta or WhatsApp tool is connected in this session. Connecting one needs a token the owner creates in Meta and sets as an environment variable, never pasted into chat. The Graph API may not show the recipient limit, so the dashboard check comes first. Not blocking.
 4. **Competitor claims (pitch-only):** other incumbents' discovery features (Coupa, Zycus, JAGGAER, Ivalua, ServiceNow, Zoho, GEP) are unchecked. SAP Ariba Discovery exists (search results only, re-check sap.com). Fees unverified. Pitch-only, not blocking.
-5. **Zuric Group (pitch-only):** the owner's "Zurich" appears to be the same firm. Confirm before the pitch; not blocking.
+5. **Zuric Group (pitch-only):** NOT VERIFIED. The owner calls it "Zurich", the PDF says "Zuric Group", and the 6 Nov web search found no public profile under either name. Confirm with the owner before the pitch; not blocking.
 6. **Corrected teammate handoff (`agent-handoff-corrected.md`):** 75 changes plus the Zuric correction. Owner review before it goes to teammates. Pitch-only for the parts not used by the build.
 7. **Repo visibility:** stays private for now. Public by the handbook deadline.
 
@@ -256,12 +256,12 @@ Small and mid-size Indian buyers need a regular purchase made. The agent finds v
 
 ### 13.5 Path from idea to MVP (proposed order)
 
-| Step | What | Done when | Owner |
-| --- | --- | --- | --- |
-| 1 | Pick the wedge: one category (industrial sensors), one buyer type, one channel (WhatsApp). | Decision recorded. | Owner decides |
-| 2 | Build the hackathon MVP: the seven-step flow with simulated supplier replies (sections 4 and 5). | Demo runs end to end; labels and citations shown. | Team (sections 5 and 12) |
-| 3 | Read Meta's WhatsApp policy and the Crustdata terms with a lawyer or the owner before any real use. | Written note: allowed, not allowed, or needs a change. | Owner |
-| 4 | **Only if the project becomes real (not planned):** pilot with real buyers and suppliers. | Not started. | Owner |
+| Step | What                                                                                                | Done when                                              | Owner                    |
+| ---- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------ |
+| 1    | Pick the wedge: one category (industrial sensors), one buyer type, one channel (WhatsApp).          | Decision recorded.                                     | Owner decides            |
+| 2    | Build the hackathon MVP: the seven-step flow with simulated supplier replies (sections 4 and 5).    | Demo runs end to end; labels and citations shown.      | Team (sections 5 and 12) |
+| 3    | Read Meta's WhatsApp policy and the Crustdata terms with a lawyer or the owner before any real use. | Written note: allowed, not allowed, or needs a change. | Owner                    |
+| 4    | **Only if the project becomes real (not planned):** pilot with real buyers and suppliers.           | Not started.                                           | Owner                    |
 
 ### 13.6 Decisions for the owner (product direction)
 
