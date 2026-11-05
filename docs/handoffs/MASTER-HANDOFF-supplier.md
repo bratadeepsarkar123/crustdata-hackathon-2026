@@ -1,8 +1,8 @@
 # ContextCon 04: master handoff, supplier agent
 
-**Status:** active. This replaces the two older research handoffs (kept as history, marked SUPERSEDED).
+**Status:** active. Single source for the team. Older research handoffs are marked SUPERSEDED. Planning is complete (6 Nov, 3:07 AM IST as stated by the owner). Background and corrections are in `PLANNING-HANDOVER-supplier.md`.
 **Team:** three people. Person 1 is the repo owner (`bratadeepsarkar123`, integrator). Person 2 is `AdityaChittora`. Person 3 is `debugat2am`. Logins are from `TEAMWORK.md`.
-**Decisions:** the CTO desk, for the team's owner.
+**Decisions:** taken by the owner in chat, or by a three-voter round where the owner delegated the choice. See section 2.
 
 ---
 
@@ -10,32 +10,36 @@
 
 A supplier agent for a buyer who needs to buy something regularly. Example: 500 industrial temperature sensors, budget $25,000, delivery in 14 days. The agent reads the request, finds candidate suppliers, checks each company is real with Crustdata, asks suppliers for quotes over WhatsApp, compares the quotes against the buyer's policy, and produces an approved vendor record and a purchase order (PO).
 
-**What is real and what is simulated in the demo:**
+**Real and simulated in the demo:**
 
-- **Real:** the request parsing, the Crustdata company checks, the policy comparison, and WhatsApp messages between the team's own phones.
+- **Real:** request parsing, Crustdata company checks, policy comparison, and WhatsApp messages between the team's own phones.
 - **Simulated (labelled SIMULATED everywhere):** supplier replies and quotes, the vendor record, and the PO. No message goes to any real supplier.
 
 Second category, later: footwear (TESSCH; its sole is PU, not rubber or foam).
 
-## 2. Decisions made
+## 2. Decisions
 
-| Decision                           | Status                                                                                                                                                                                                                                                            |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Supplier agent over freight        | Chosen. Freight parked.                                                                                                                                                                                                                                           |
-| First category: industrial sensors | Chosen. Footwear second.                                                                                                                                                                                                                                          |
-| Insurance and sanctions ideas      | Parked.                                                                                                                                                                                                                                                           |
-| Repo stays **private** for now     | Owner's choice. Handbook requires public later.                                                                                                                                                                                                                   |
-| Crustdata demo rule                | **Option B** (2 of 3 votes): show one example company, 3 to 4 fields, labelled "Source: Crustdata" and the endpoint. No raw JSON, export files, download links or full records. Owner to confirm.                                                                 |
-| Supplier contact channel           | **WhatsApp**, not email. Real messages only between the team's own phones (Meta test number, numbers added by the team). Supplier messages are simulated and labelled. Real suppliers need opt-in and approved templates, so they are out of scope for the event. |
-| Competitor data                    | Comes only from Teammate B, when he delivers it. The build does not wait for it.                                                                                                                                                                                  |
-| Zuric Group                        | Real firm: website zuricgroup.com, based at The Meydan Hotel, Dubai. Procurement services confirmed. Does **not** describe supplier onboarding. Client figures and pricing NOT VERIFIED.                                                                          |
+| Decision                           | Status                                                                                                                                                                                                                                    |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Supplier agent over freight        | Chosen. Freight parked.                                                                                                                                                                                                                   |
+| First category: industrial sensors | Chosen. Footwear second.                                                                                                                                                                                                                  |
+| Insurance and sanctions ideas      | Parked.                                                                                                                                                                                                                                   |
+| Repo stays **private** for now     | Owner's choice. Handbook requires public later.                                                                                                                                                                                           |
+| **Crustdata demo rule**            | **Option C** (owner, 6 Nov, chose our recommendation). Screens show **where each fact came from** ("Source: Crustdata" and the endpoint and field), never the company values. No raw JSON, export files, download links or full records.  |
+| **Supplier names on screen**       | **Neutral labels** ("Supplier 1", "Supplier 2", ...) on every screen, with the citation beside each fact. The real name is kept only in the internal log, never on a screen or in the video. Three-voter round, 6 Nov: 3 of 3 for labels. |
+| Discovery method                   | **Ranked search** (`search.query`) with location filters as hard limits. Filters-only is the fallback. Source: claude-7a live test, 6 Nov.                                                                                                |
+| Supplier contact channel           | **WhatsApp**, not email. Real messages only between the team's phones (Meta test number). Supplier messages are simulated. Real suppliers need opt-in and approved templates, so they are out of scope for the event.                     |
+| Competitor analysis                | Teammate B's file is delivered (`task2-competitor-workflows.md`). It is used for the pitch only. The build does not wait for it.                                                                                                          |
+| Zuric Group                        | One note only: a Dubai-based procurement services firm (zuricgroup.com). It does not describe supplier onboarding. Pricing and client figures are not verified. Pitch-only, not blocking.                                                 |
+
+**Display rule under option C (what it means for the build):** option C is a display rule only. Person 2 still fetches `headcount` and `locations` from Crustdata, because the policy check (Person 3) needs them. The screens show only the labels and the citations. The internal log keeps the real names and the values, and nothing from that log goes into the demo or the video.
 
 ## 3. Hard rules (link, do not copy)
 
 Full rules: `rules.md` and `build-rules.md` in the repo root. These can disqualify us:
 
 - **History:** the repo's commit history starts at 11:00 PM IST, 5 Nov. No backdating. No force-push over a teammate's work.
-- **No secrets:** no Crustdata key, model key, WhatsApp token or password in code, commits, issues, chat, screenshots or video. Keys in local environment variables and git-ignored files.
+- **No secrets:** no Crustdata key, model key, WhatsApp token or password in code, commits, issues, chat, screenshots or video. Keys go in local environment variables and git-ignored files.
 - **No real outreach:** no real message, email, call, booking or payment to anyone outside the team. WhatsApp goes only to team-owned phones.
 - **Label simulated items** everywhere: product, demo, README.
 - **Cite every fact** (endpoint and field, or document page). Say "I don't know" when unverified.
@@ -43,117 +47,132 @@ Full rules: `rules.md` and `build-rules.md` in the repo root. These can disquali
 
 ## 4. The agent, end to end
 
-| #   | Step                         | In                 | Out                                                | Real or simulated                          | Source                                           |
-| --- | ---------------------------- | ------------------ | -------------------------------------------------- | ------------------------------------------ | ------------------------------------------------ |
-| 1   | Parse the request            | Messy text         | Request (JSON, section 6)                          | Real                                       | Request text                                     |
-| 2   | Find candidate suppliers     | Request            | Candidate list                                     | Real (Crustdata)                           | `POST /company/search`                           |
-| 3   | Verify each company          | Candidate          | Verified supplier, or NOT VERIFIED                 | Real (Crustdata)                           | `POST /company/identify`, `POST /company/enrich` |
-| 4   | Dedupe                       | Candidates         | One record per company, with match confidence      | Real                                       | Domain and name match                            |
-| 5a  | **WhatsApp request**         | Verified supplier  | Outbound message log                               | Team phones: real. Supplier: **SIMULATED** | Log file                                         |
-| 5b  | **WhatsApp reply and quote** | Reply              | Quote                                              | **SIMULATED** (labelled)                   | Sample data                                      |
-| 6   | Compare and apply policy     | Quotes plus policy | Ranked result, exceptions queue                    | Real logic on simulated data               | Policy file (sample, labelled)                   |
-| 7   | Vendor record and PO         | Chosen supplier    | Vendor record and PO, each with an idempotency key | **SIMULATED**                              | Key stored before any write                      |
+| #   | Step                         | In                | Out                                                | Real or simulated                          | Source and check                                                                                                                                                                                                                                                                                                                                                                                                         |
+| --- | ---------------------------- | ----------------- | -------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Parse the request            | Messy text        | Request (section 6)                                | Real                                       | Request text                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 2   | Find candidate suppliers     | Request           | Candidate list (labels plus internal names)        | Real (Crustdata)                           | `POST /company/search` with `search.query` (ranked). Filters are hard limits. Run `company_autocomplete` first for any industry filter. Ranked search gives one window of up to 100 results, no paging.                                                                                                                                                                                                                  |
+| 3   | Verify each company          | Candidate         | Verified supplier, or NOT VERIFIED                 | Real (Crustdata)                           | `POST /company/identify` (free), then `POST /company/enrich` (2 credits per match) for `headcount` and `locations`. Identify does not return these. **Product-line check:** read `basic_info.description` from `POST /company/enrich` (request it in the `basic_info` fields; identify does not return it). Confirmed by claude-7a, 6 Nov, via the free schema call. If it is empty, the card says `HUMAN_OR_SIMULATED`. |
+| 4   | Dedupe                       | Candidates        | One record per company, with match confidence      | Real                                       | Domain and name match, within the window from step 2                                                                                                                                                                                                                                                                                                                                                                     |
+| 5a  | **WhatsApp request**         | Verified supplier | Outbound message log                               | Team phones: real. Supplier: **SIMULATED** | Log file                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 5b  | **WhatsApp reply and quote** | Reply             | Quote                                              | **SIMULATED** (labelled)                   | Sample data                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 6   | Compare and apply policy     | Quotes and policy | Ranked result, exceptions queue                    | Real logic on simulated data               | Policy file (sample, labelled)                                                                                                                                                                                                                                                                                                                                                                                           |
+| 7   | Vendor record and PO         | Chosen supplier   | Vendor record and PO, each with an idempotency key | **SIMULATED**                              | Key stored before any write                                                                                                                                                                                                                                                                                                                                                                                              |
 
-**Human-in-the-loop:** only at step 6 exceptions (no supplier within budget) and step 3 NOT VERIFIED. Exceptions go to a queue with the reason.
+**Human-in-the-loop:** only at step 6 exceptions (no supplier within budget) and step 3 NOT VERIFIED or product-line unknown. Exceptions go to a queue with the reason.
 
 **Idempotency:** every write (WhatsApp send, quote, vendor record, PO) gets a unique key, stored before the write and checked before any retry. A crash or retry never sends or creates twice.
+
+**Screens:** every screen uses the display label (`Supplier 1`, ...). Steps 2, 3, 6 and 7 show the label and the citation beside each fact.
 
 ## 5. Work split (three people)
 
 Chosen by majority of three advisers (two of three put the policy check with Person 3). The integrator (Person 1) merges. Nobody edits another person's files without asking.
 
+**File ownership check:** each path has exactly one owner. Shared shapes live only in `src/contracts/*` (Person 1). Changes after the contract freeze need all three people to agree.
+
 ### Person 1: repo owner (`bratadeepsarkar123`). Spine, intake, PO, end-to-end run, video
 
-- **Owns:** `src/contracts/*` (shared JSON shapes, frozen first), `src/intake/*`, `src/po/*`, `src/state/*` (idempotency store), orchestrator, `tests/e2e*`, `samples/*`, `README.md`, demo video.
-- **Does:** steps 1 and 7. Runs the whole flow. Owns the end-to-end run, which must pass before 6:30 AM.
-- **Starts now:** contracts and fixtures; intake on the three sample requests; idempotency store.
+- **Owns:** `src/contracts/*`, `src/intake/*`, `src/po/*`, `src/state/*` (idempotency store and internal name log), orchestrator, `tests/e2e*`, `samples/*`, `README.md`, demo video.
+- **Does:** steps 1, 7 and the orchestrator. Runs the end-to-end flow. Owns the end-to-end run, which must pass before 6:30 AM.
+- **Acceptance checks:** a sample request runs from step 1 to step 7 with no real network call; repeating the same request creates one PO; the PO and vendor screens show only labels; the internal log is the only place with real names.
 - **Must not touch:** Crustdata client, quotes, WhatsApp module.
 
 ### Person 2: `AdityaChittora`. Discovery and Crustdata
 
-- **Owns:** `src/discovery/*`, `src/crustdata/*` (client, retry, rate limits), the demo excerpt script, `tests/crustdata*`.
+- **Owns:** `src/discovery/*`, `src/crustdata/*` (client, retry, rate limits), the citation script for the demo, `tests/crustdata*`.
 - **Does:** steps 2, 3 and 4. Runs the one live Crustdata call that confirms the open field paths (section 7).
-- **Starts now:** client with headers, 429 backoff, 402/403 stop; dedupe on fixtures.
+- **Discovery:** ranked `search.query` first; `company_autocomplete` before any industry filter; location filters as hard limits; filters-only as the fallback. One window of up to 100 results; dedupe inside that window.
+- **Verification:** identify first (free), then enrich by id (2 credits) for `headcount` and `locations`. Never request `headcount` or `locations` on identify.
+- **Acceptance checks:** a fixture run returns labels and citations only on the screen data; a 429 backs off and a 402 or 403 stops the run with a clear message; the product-line check is marked human or simulated until the field is confirmed; the live run uses under 200 credits and `GET /account/credits` is checked first.
 - **Must not touch:** quotes, WhatsApp, PO.
 
 ### Person 3: `debugat2am`. Quotes, policy, WhatsApp, PO retries
 
 - **Owns:** `src/quotes/*`, `src/policy/*`, `src/whatsapp/*` (new; simulated for suppliers, team phones only), `data/simulated/*`, `tests/failure*`, `docs/*` (diagram).
 - **Does:** steps 5a, 5b and 6. Checks retries never send twice.
-- **Starts now:** simulated quote generator; policy file and scoring formula; WhatsApp log writer.
-- **Guards:** the WhatsApp module refuses to run unless mode is set to team-phones or SIMULATED. A test asserts no outbound call to any other number.
+- **Guards:** the WhatsApp module refuses to run unless mode is `TEAM_PHONE` or `SIMULATED`. A test asserts no outbound call to any other number.
+- **Acceptance checks:** quotes and ranked results show labels only; a repeated WhatsApp send with the same key sends once; a quote over budget goes to the exceptions queue with the reason; the diagram labels simulated steps.
 - **Must not touch:** Crustdata client, PO writes (Person 1 owns those).
 
 **Integration points, in order:**
 
 1. **IP0, first hour:** Person 1 pushes contracts and fixtures. Everyone pulls.
 2. **IP1:** Person 2 pushes discovery output on fixtures. Person 3 consumes it.
-3. **IP2, 3:00 AM (due now):** stub end-to-end run through all steps. Person 1 owns it.
-4. **IP3:** one live Crustdata run replaces fixtures. Person 2 keeps one excerpt for the demo.
+3. **IP2, stub end-to-end:** Person 1 runs all steps on fixtures.
+4. **IP3:** one live Crustdata run replaces fixtures. Person 2 keeps the citation script for the demo.
 5. **IP4:** idempotency wired into the WhatsApp and PO writes. Person 3's failure tests run against it.
-6. **IP5, 6:30 AM:** README, diagram and video frozen. Code freeze at 7:00 AM.
+6. **IP5:** README, diagram and video frozen. Code freeze at 7:00 AM.
 
 **Shared tests and docs:** each person writes failure tests for their own block. Person 1 writes the README. Person 3 records the video in the last hour. Person 2 checks every Crustdata citation.
 
 ## 6. Shared interface contract (JSON shapes)
 
 - **Request:** `{ item, quantity, budget, currency, deadline_days, region, missing_fields[] }`
-- **Verified supplier:** `{ name, primary_domain, year_founded, headquarters, headcount_total, industry, sources: [{ field, endpoint }], confidence }`
-- **WhatsApp message:** `{ supplier, direction: "outbound" | "inbound", text, idempotency_key, mode: "TEAM_PHONE" | "SIMULATED", label }`
-- **Quote (SIMULATED):** `{ supplier, unit_price, lead_time_days, label: "SIMULATED" }`
-- **Vendor record and PO (SIMULATED):** `{ idempotency_key, supplier, po_number, total, status, label: "SIMULATED" }`
+- **Candidate and verified supplier:** `{ display_label, name_internal (log only, never shown), primary_domain, year_founded, headquarters_internal, headcount_total_internal, industry, product_line_status: "CONFIRMED" | "HUMAN_OR_SIMULATED", sources: [{ field, endpoint }], confidence }`
+  - `display_label` is the only supplier identifier that appears on a screen.
+  - Fields marked `_internal` are for the policy check and the log. They are never printed on a screen.
+- **WhatsApp message:** `{ display_label, direction: "outbound" | "inbound", text, idempotency_key, mode: "TEAM_PHONE" | "SIMULATED", label }`
+- **Quote (SIMULATED):** `{ display_label, unit_price, lead_time_days, label: "SIMULATED" }`
+- **Vendor record and PO (SIMULATED):** `{ idempotency_key, display_label, po_number, total, status, label: "SIMULATED" }`
 
-Person 1 freezes these in `src/contracts/*` first. Changes after that need all three to agree.
+Person 1 freezes these in `src/contracts/*` first (IP0).
 
 ## 7. Crustdata reference (verified 2026-11-06)
 
-Source: `CRUSTDATA-CHECK-REPORT.md` (sections 2 to 5, and the follow-up). No keys in that file.
+Source: `CRUSTDATA-CHECK-REPORT.md` (sections 2 to 5, and the follow-up), and claude-7a's live checks on 6 Nov. No keys in any of these files.
 
 - **Base:** `https://api.crustdata.com`. **Headers:** `authorization: Bearer <KEY>`, `x-api-version: 2025-11-01`.
 - **Enabled (12):** `/company/search`, `/company/identify`, `/company/enrich`, `/company/search/autocomplete`, `/person/search`, `/person/enrich`, `/person/search/autocomplete`, `/job/search`, `/social_post/search`, `/agent/query`, `/web/search/live`, `/web/enrich/live`.
 - **Not on our account:** `/job/search/autocomplete` (job autocomplete is MCP-only as `job_autocomplete`). All `/batch/...` endpoints. `/person/identify`, `/person/contact/enrich`, and the professional-network live endpoints.
-- **Plan-gated fields (403 if requested):** company `technographics`, `social_posts`, `maps`; person `assessment`, `certifications`, `recently_changed_jobs`, `social_posts`, `years_of_experience`, `basic_profile.first_name`, `basic_profile.last_name`.
-- **Fields to request:** `locations` (for `locations.headquarters`) and `headcount` (for `headcount.total`).
+- **Plan-gated fields (403 if requested):** company `technographics`, `social_posts`, `maps`, `hiring.recent_openings`, `social_profiles.crunchbase`; person `assessment`, `certifications`, `recently_changed_jobs`, `social_posts`, `years_of_experience`, `basic_profile.first_name`, `basic_profile.last_name`. `headcount` and `locations` are plan-gated on identify, so request them on enrich only.
+- **Fields to request:** `locations` (for `locations.headquarters`) and `headcount` (for `headcount.total`), on enrich.
 - **Field names:** the employer filter is `experience.employment_details.current.company_name`. It comes back as `experience.employment_details.current.name`. `current_company` and `current_employer` do not exist.
 - **Department:** `basic_profile.normalized_title.department` (person search).
-- **Credits:** `GET /account/credits` returns `account.credits`. Check before any batch run. Budget: 15,000 per builder.
-- **Costs:** company search 0.03 per result; company identify free; company enrich 2 per match; person search 0.03 per result (0.23 with experience and education); person enrich 1 base plus extras; job search 0.03 per result; autocomplete free.
+- **Credits:** `GET /account/credits` returns `account.credits`. Check before any run. Budget: 15,000 per builder.
+- **Costs:** company search 0.03 per result (ranked query test: 0.15 for 5 results); company identify free; company enrich 2 per match; person search 0.03 per result (0.23 with experience and education); person enrich 1 base plus extras; job search 0.03 per result; autocomplete free.
 - **Per-minute limits:** company search 30; company identify 30; company enrich 15; person search 30; person enrich 15; job search 30; autocomplete 300; web search and enrich 10.
+- **Industry filter values are a closed set.** Resolve with `company_autocomplete` before filtering. An unknown value returns zero rows silently.
 - **Gaps (not in Crustdata):** PAN and GSTIN, bank account ownership, ISO and RoHS certifications (plan-gated), signing authority.
 - **Still unconfirmed:**
-  - LinkedIn ID: no separate field. Closest is `social_handles.professional_network_identifier.profile_url`, which is not filterable.
+  - **Product-line field: confirmed.** `basic_info.description` (company enrich, basic_info group; also returned by company search with `fields: basic_info`). Not in identify's schema summary. Still to check on the live run: whether it is empty for typical candidates.
+  - LinkedIn ID: no separate field. Closest is `social_handles.professional_network_identifier.profile_url`, not filterable.
   - Tenure in months: no field. Closest is `experience.employment_details.current.years_at_company_raw`, not confirmed as months.
-  - `metadata.date_added` on jobs: meaning not defined in the schema.
-  - Owner-approval items for access: not yet decided.
+  - `metadata.date_added` on jobs: meaning not defined in the schema. Jobs are out of scope.
 - **Terms:** no clause mentions demos. Restricted: giving data outside the organisation, sharing export files or download links, selling the data as a database or enrichment service. See section 8.
 
 ## 8. Demo rule for Crustdata data
 
-- **Decision:** option B. A small excerpt only: one example company, 3 to 4 fields, labelled "Source: Crustdata" with the endpoint on screen. No raw JSON, no export files, no download links.
-- **Why:** the judging rules ask for "where each fact came from" (20 points for facts). The owner's rule is to show data only when it proves a point.
-- **Risk:** a judge reads the excerpt as giving data to outsiders. Keep it to one company, keep the source notice visible, never share the file.
-- **Fallback:** if the owner wants no values on screen, use field-level citations only (option C).
+- **Decision: option C.** Citations only; no company values on screen. Owner chose our recommendation in chat on 6 Nov.
+- **What the screen shows:** "Supplier 1", the field name, "Source: Crustdata", and the endpoint. For example: "Headcount: source Crustdata, company enrich". No values.
+- **What never appears on screen, in the video, or in the README:** company values, the real company name, raw JSON, export files, download links or full records.
+- **Why:** the judging rules ask for "where each fact came from" (20 points for facts). The Crustdata terms restrict giving data outside the organisation, and the terms do not mention demos.
+- **Risk:** a judge may find labels less credible. The citation trail has to carry the proof.
 
 ## 9. Open items
 
-1. **Owner confirms** the demo rule (B) and the three-person split.
-2. **Zuric Group:** the owner's "Zurich" is the same firm. Owner to confirm it is the one meant, since its site does not describe onboarding.
-3. **Crustdata access:** the Crustdata session says the FDE contact in the handbook is **Ainesh**, not Avinash. Nothing has been sent to the FDE yet. Owner to decide who contacts them and whether to approve the access items.
-4. **WhatsApp:** the team creates a Meta test number and adds its three phones to the recipient list. Two facts to check in the Meta dashboard, not in docs: the recipient cap, and how long business verification takes (if needed).
-5. **Repo visibility:** stays private for now. Public by the handbook deadline.
-6. **Time:** about 3:00 AM now. Freeze at 7:00 AM. Confirm the actual time before using the timeline.
-7. **Corrected teammate handoff:** `agent-handoff-corrected.md` has 75 changes plus the Zuric correction. Owner to review.
-8. **Teammate B's competitor analysis:** comes only from Teammate B.
+Non-blocking items are for the pitch and do not hold the build.
 
-## 10. Timeline (handbook; confirm the actual time)
+1. **Product-line field: resolved.** Use `basic_info.description` on enrich (section 7). Empty descriptions fall back to `HUMAN_OR_SIMULATED`. Not blocking.
+2. **WhatsApp recipient limit and business verification:** the owner checks these on the Meta dashboard. Not blocking; the test number works for the three team phones.
+3. **Meta connection (side task):** no Meta or WhatsApp tool is connected in this session. Connecting one needs a token the owner creates in Meta and sets as an environment variable, never pasted into chat. The Graph API may not show the recipient limit, so the dashboard check comes first. Not blocking.
+4. **Competitor claims (pitch-only):** other incumbents' discovery features (Coupa, Zycus, JAGGAER, Ivalua, ServiceNow, Zoho, GEP) are unchecked. SAP Ariba Discovery exists (search results only, re-check sap.com). Fees unverified. Pitch-only, not blocking.
+5. **Zuric Group (pitch-only):** the owner's "Zurich" appears to be the same firm. Confirm before the pitch; not blocking.
+6. **Corrected teammate handoff (`agent-handoff-corrected.md`):** 75 changes plus the Zuric correction. Owner review before it goes to teammates. Pitch-only for the parts not used by the build.
+7. **Repo visibility:** stays private for now. Public by the handbook deadline.
 
-| Time (IST)     | What happens                                              |
-| -------------- | --------------------------------------------------------- |
-| 3:00 AM        | First end-to-end stub run (IP2).                          |
-| 4:30 AM        | One live Crustdata run replaces fixtures (IP3).           |
-| 5:30 AM        | Idempotency wired into WhatsApp and PO writes (IP4).      |
-| 6:30 AM        | Last call. README, diagram and video frozen (IP5).        |
-| 7:00 AM, 6 Nov | **Code freeze.** Repo, video and form due. Hard deadline. |
+## 10. Timeline
+
+Targets set from 3:07 AM IST. The 7:00 AM code freeze is from the handbook; the other times are plan targets.
+
+| Time (IST)     | What happens                                                           |
+| -------------- | ---------------------------------------------------------------------- |
+| 3:07 to 3:30   | IP0: contracts and fixtures pushed. Everyone pulls.                    |
+| 3:30 to 4:15   | IP1 and IP2: discovery on fixtures; stub end-to-end run (Person 1).    |
+| 4:15 to 5:00   | IP3: one live Crustdata run replaces fixtures. Citation check.         |
+| 5:00 to 5:45   | IP4: idempotency wired into WhatsApp and PO writes. Failure tests run. |
+| 5:45 to 6:30   | Fixes only. Video recorded. Rehearsal of the full demo, once.          |
+| 6:30 AM        | IP5: README, diagram and video frozen. Last call.                      |
+| 7:00 AM, 6 Nov | **Code freeze.** Repo, video and form due. Hard deadline.              |
 
 ## 11. Return format for each person
 
@@ -162,10 +181,39 @@ Source: `CRUSTDATA-CHECK-REPORT.md` (sections 2 to 5, and the follow-up). No key
 3. How it was checked (test names, sample run path).
 4. Blockers, with the owner decision needed.
 
-## 12. Paste-ready start prompt (for each person's coding agent)
+## 12. Paste-ready briefs (one per person)
 
-Paste `ContextCon-team-rules\TEAM-AGENT-PROMPT.md` first, then:
+Each person pastes `ContextCon-team-rules\TEAM-AGENT-PROMPT.md` first, then the brief below for their role.
+
+**Person 1 brief:**
 
 ```
-You are Person [1, 2 or 3] in MASTER-HANDOFF-supplier.md section 5. Your files: [list from section 5]. Your inputs and outputs: section 6. Your acceptance checks: section 4 for your steps. Do not edit other people's files. Do not print or commit any key. Label every simulated item. WhatsApp: team phones only. Report back using section 11.
+You are Person 1 (integrator) in MASTER-HANDOFF-supplier.md, sections 5 and 6.
+Your files: src/contracts/*, src/intake/*, src/po/*, src/state/*, the orchestrator, tests/e2e*, samples/*, README.md, the demo video.
+Your steps: 1 and 7, plus the end-to-end run. Inputs and outputs: section 6.
+Acceptance: a sample request runs step 1 to step 7 with no real network call; repeating it creates one PO; screens show only display labels; real names appear only in the internal log.
+Do not edit Person 2's or Person 3's files. Do not print or commit any key. Label every simulated item. WhatsApp: team phones only.
+Report using section 11.
+```
+
+**Person 2 brief:**
+
+```
+You are Person 2 (discovery and Crustdata) in MASTER-HANDOFF-supplier.md, sections 5, 6 and 7.
+Your files: src/discovery/*, src/crustdata/*, the citation script for the demo, tests/crustdata*.
+Your steps: 2, 3 and 4. Discovery is ranked search.query with location filters as hard limits; run company_autocomplete before any industry filter. Verify with identify first (free), then enrich by id (2 credits) for headcount and locations.
+Product line: request `basic_info.description` on enrich. If it is empty, mark the check HUMAN_OR_SIMULATED.
+Acceptance: fixture run returns labels and citations only on screen data; 429 backs off; 402 and 403 stop with a clear message; live run under 200 credits after checking GET /account/credits.
+Do not edit other people's files. Do not print or commit any key. Report using section 11.
+```
+
+**Person 3 brief:**
+
+```
+You are Person 3 (quotes, policy, WhatsApp, PO retries) in MASTER-HANDOFF-supplier.md, sections 5, 6 and 7.
+Your files: src/quotes/*, src/policy/*, src/whatsapp/*, data/simulated/*, tests/failure*, docs/* (diagram).
+Your steps: 5a, 5b and 6. Inputs and outputs: section 6. Use display labels only; the policy check may read the _internal fields.
+Guards: the WhatsApp module runs only in TEAM_PHONE or SIMULATED mode; a test asserts no call to any other number.
+Acceptance: a repeated send with the same key sends once; an over-budget quote goes to the exceptions queue with the reason; the diagram labels simulated steps.
+Do not edit Person 1's or Person 2's files. Do not print or commit any key. Report using section 11.
 ```
