@@ -265,7 +265,7 @@ Small and mid-size Indian buyers need a regular purchase made. The agent finds v
 
 ### 13.6 Decisions for the owner (product direction)
 
-- **Decided (owner, 6 Nov): demo only.** No real business is planned now. The data-terms and WhatsApp-policy checks in section 13.5 step 4 stay on the list in case the plan changes.
+- **Decided (owner, 6 Nov): demo only.** No real business is planned now. The data-terms and WhatsApp-policy checks in section 13.5 step 3 stay on the list in case the plan changes.
 - **Demo rules still apply:** Crustdata citations only (option C), WhatsApp to team phones only, no real supplier or buyer contact. These are not optional for a demo either, because the Crustdata terms cover sharing data outside the team.
 
 ### 13.7 Where and how to tap (channels, to confirm)
