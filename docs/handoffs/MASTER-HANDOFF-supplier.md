@@ -217,3 +217,60 @@ Guards: the WhatsApp module runs only in TEAM_PHONE or SIMULATED mode; a test as
 Acceptance: a repeated send with the same key sends once; an over-budget quote goes to the exceptions queue with the reason; the diagram labels simulated steps.
 Do not edit Person 1's or Person 2's files. Do not print or commit any key. Report using section 11.
 ```
+
+---
+
+## 13. Founder path: from idea to MVP (for discussion, not yet decided)
+
+This section is the "why and where" that the build sections assume. Items marked NOT VERIFIED have no source yet.
+
+### 13.1 The idea in one line
+
+Small and mid-size Indian buyers need a regular purchase made. The agent finds vetted suppliers, asks for quotes, applies the buyer's policy, and produces a PO. The buyer does one plain request instead of hours of calls and spreadsheets.
+
+### 13.2 Market check (sourced 6 Nov, research pass; confidence in brackets)
+
+- **Global procurement software:** about $8–10B (2025) and $9–11B (2026), depending on the research firm (Grand View, Fortune BI, and others). Definitions differ; the figure is not a serviceable market for us. [medium]
+- **Indian MSMEs:** about 4.72 crore on the Udyam portal (June 2026, secondary source). 7.83 crore+ across Udyam platforms as of 28 Feb 2026 (IBEF, citing government). [medium / high]
+- **Late payments to MSMEs:** about ₹8.1 lakh crore stuck in receivables (Economic Survey 2025-26, via Business Standard, Jan 2026). This shows cash pain, not sourcing pain. [high]
+- **MSMEs that buy goods regularly:** NOT VERIFIED.
+- **MSMEs that struggle to find suppliers:** NOT VERIFIED. This is the core pain, so it needs our own interviews.
+- **GeM (government buying portal):** only government bodies buy. Private buyers get no supplier discovery there. Seller counts conflict (22 lakh in 2025 vs 62 lakh+ claimed in Feb 2026). [medium]
+
+### 13.3 Competition and price points
+
+- **Coupa:** median about $95,000 a year (Vendr benchmark). [medium]
+- **SAP Ariba:** median about $61,500 a year (range $15.5k to $371k). [medium]
+- **Jaggaer:** estimated $150k to $650k a year. [medium]
+- **Zycus:** contact sales only. Third-party estimates start near $50k a year. [NOT VERIFIED as official]
+- **Zoho (ERP with procurement):** ₹999 per user a month, billed annually, minimum 5 users (Zoho's own page); third-party figures conflict. [medium]
+- **Small-buyer tools:** OfBusiness is a supplier marketplace; Alvoff is email-first sourcing. Neither is confirmed as doing WhatsApp outreach. [NOT VERIFIED]
+- **Read:** the big tools are priced for enterprises. The gap we would test is the small buyer who wants one plain request and WhatsApp follow-up. That gap is a hypothesis, not a finding.
+
+### 13.4 Risks a founder checks first
+
+1. **Willingness to pay:** no source shows what small or mid buyers in India pay for sourcing. Test with interviews before building more.
+2. **WhatsApp policy:** unsolicited B2B supplier outreach and per-message cost are NOT VERIFIED. Read Meta's WhatsApp Business policy and pricing directly before any real outreach.
+3. **Data terms:** the Crustdata terms prohibit reselling their data as an enrichment service. A paid product needs a different data source or a licence. This blocks the commercial path as it stands.
+4. **Demand evidence:** the sourcing pain itself has no verified figure. Primary interviews are the only source for now.
+
+### 13.5 Path from idea to MVP (proposed order)
+
+| Step | What | Done when | Owner |
+| --- | --- | --- | --- |
+| 1 | Interview 5 to 10 purchase managers at small manufacturers. Ask how they find suppliers, how often they buy, what it costs them, and what they would pay. | Notes on pain, frequency and price. Written up with dates. | Owner (interviews); CTO desk (notes) |
+| 2 | Pick the wedge: one category (industrial sensors), one buyer type, one channel (WhatsApp). | Decision recorded. | Owner decides |
+| 3 | Build the hackathon MVP: the seven-step flow with simulated supplier replies (sections 4 and 5). | Demo runs end to end; labels and citations shown. | Team (sections 5 and 12) |
+| 4 | Read Meta's WhatsApp policy and the Crustdata terms with a lawyer or the owner before any real use. | Written note: allowed, not allowed, or needs a change. | Owner |
+| 5 | Pilot with three real buyers and real suppliers, handled by hand at first. Measure time to a shortlist and reply rate. | Numbers recorded, go or stop decided. | Owner |
+
+### 13.6 Decisions for the owner (product direction)
+
+- **Hackathon demo only, or plan a real product after the event?** This decides whether the data terms and WhatsApp policy are blocking. Recommendation: demo now, and do steps 1 and 4 before any product plan.
+- **Who we interview first:** recommendation is 5 purchase managers at small manufacturers, found through the owner's network.
+
+### 13.7 Where and how to tap (channels, to confirm)
+
+- Owner's network of small manufacturers and buyers (interviews, pilot).
+- Trade associations for small manufacturers (NOT VERIFIED as an approach; check first).
+- WhatsApp Business for buyer follow-up, once the policy check in step 4 is done.
