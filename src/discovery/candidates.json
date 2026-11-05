@@ -1,0 +1,167 @@
+[
+  {
+    "display_label": "Supplier 1",
+    "name_internal": null,
+    "primary_domain": null,
+    "year_founded": null,
+    "headquarters_internal": null,
+    "headcount_total_internal": null,
+    "industry": "Industrial sensors",
+    "product_line_status": "HUMAN_OR_SIMULATED",
+    "sources": [
+      {
+        "field": "primary_domain",
+        "endpoint": "POST /company/identify"
+      },
+      {
+        "field": "year_founded",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "headcount.total",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "locations.headquarters",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "basic_info.description",
+        "endpoint": "POST /company/enrich"
+      }
+    ],
+    "confidence": 0.98
+  },
+  {
+    "display_label": "Supplier 2",
+    "name_internal": null,
+    "primary_domain": null,
+    "year_founded": null,
+    "headquarters_internal": null,
+    "headcount_total_internal": null,
+    "industry": "Industrial sensors",
+    "product_line_status": "HUMAN_OR_SIMULATED",
+    "sources": [
+      {
+        "field": "primary_domain",
+        "endpoint": "POST /company/identify"
+      },
+      {
+        "field": "year_founded",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "headcount.total",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "locations.headquarters",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "basic_info.description",
+        "endpoint": "POST /company/enrich"
+      }
+    ],
+    "confidence": 0.95
+  },
+  {
+    "display_label": "Supplier 3",
+    "name_internal": null,
+    "primary_domain": null,
+    "year_founded": null,
+    "headquarters_internal": null,
+    "headcount_total_internal": null,
+    "industry": "Industrial sensors",
+    "product_line_status": "HUMAN_OR_SIMULATED",
+    "sources": [
+      {
+        "field": "primary_domain",
+        "endpoint": "POST /company/identify"
+      },
+      {
+        "field": "year_founded",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "headcount.total",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "locations.headquarters",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "basic_info.description",
+        "endpoint": "POST /company/enrich"
+      }
+    ],
+    "confidence": 0.92
+  },
+  {
+    "display_label": "Supplier 4",
+    "name_internal": null,
+    "primary_domain": null,
+    "year_founded": null,
+    "headquarters_internal": null,
+    "headcount_total_internal": null,
+    "industry": "Industrial sensors",
+    "product_line_status": "HUMAN_OR_SIMULATED",
+    "sources": [
+      {
+        "field": "primary_domain",
+        "endpoint": "POST /company/identify"
+      },
+      {
+        "field": "year_founded",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "headcount.total",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "locations.headquarters",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "basic_info.description",
+        "endpoint": "POST /company/enrich"
+      }
+    ],
+    "confidence": 0.88
+  },
+  {
+    "display_label": "Supplier 5",
+    "name_internal": null,
+    "primary_domain": null,
+    "year_founded": null,
+    "headquarters_internal": null,
+    "headcount_total_internal": null,
+    "industry": "Industrial sensors",
+    "product_line_status": "HUMAN_OR_SIMULATED",
+    "sources": [
+      {
+        "field": "primary_domain",
+        "endpoint": "POST /company/identify"
+      },
+      {
+        "field": "year_founded",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "headcount.total",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "locations.headquarters",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "basic_info.description",
+        "endpoint": "POST /company/enrich"
+      }
+    ],
+    "confidence": 0.82
+  }
+]
