@@ -138,7 +138,7 @@ def to_supplier_display(supplier: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def format_screen_display(suppliers: List[Dict[str, Any]]) -> str:
+def format_screen_display(suppliers: List[Dict[str, Any]], is_simulated: bool = False) -> str:
     """Format suppliers for screen display strictly adhering to Option C.
 
     Option C Rules (Section 8 & PR #10 contracts):
@@ -152,13 +152,20 @@ def format_screen_display(suppliers: List[Dict[str, Any]]) -> str:
         "=================================================================",
         "          SUPPLIER DISCOVERY & VERIFICATION (SCREEN VIEW)         ",
         "  Display Rule: Option C (Display labels and citations only)     ",
+    ]
+    if is_simulated:
+        lines.append("  Mode: SIMULATED fixture; no live Crustdata call                ")
+    lines.extend([
         "=================================================================",
         "",
-    ]
+    ])
 
+    source_suffix = " [SIMULATED fixture; no live Crustdata call]" if is_simulated else ""
     for supplier in suppliers:
         label = supplier.get("display_label", "Supplier")
         status = supplier.get("product_line_status", "HUMAN_OR_SIMULATED")
+        if is_simulated and status == "CONFIRMED":
+            status = "CONFIRMED (SIMULATED)"
         conf = supplier.get("confidence", 0.0)
 
         lines.append(f"[{label}] - Match Confidence: {conf:.0%}")
@@ -166,7 +173,7 @@ def format_screen_display(suppliers: List[Dict[str, Any]]) -> str:
             field = src.get("field")
             endpoint = src.get("endpoint")
             extra = f" [{status}]" if field == "basic_info.description" else ""
-            lines.append(f"  • {field}: Source: Crustdata ({endpoint}){extra}")
+            lines.append(f"  - {field}: Source: Crustdata ({endpoint}){extra}{source_suffix}")
         lines.append("")
 
     lines.append("--- Contract Screen Projection (JSON) ---")

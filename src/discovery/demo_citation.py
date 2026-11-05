@@ -29,6 +29,7 @@ def run_demo(
 
     print("=" * 70)
     print("CONTEXTCON 04 - DEMO CITATION RUNNER (PERSON 2: DISCOVERY & CRUSTDATA)")
+    print("Mode: SIMULATED fixture; no live Crustdata call")
     print(f"Request: {request['quantity']} {request['item']} in {request['region']} (Budget: ${request['budget']})")
     print("=" * 70)
     print()
@@ -37,7 +38,7 @@ def run_demo(
     suppliers = run_discovery_pipeline(request=request, use_fixtures=True)
 
     # 1. Option C Screen Display (what the judges and screens see)
-    screen_output = format_screen_display(suppliers)
+    screen_output = format_screen_display(suppliers, is_simulated=True)
     print(screen_output)
     print()
 

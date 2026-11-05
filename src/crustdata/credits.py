@@ -83,7 +83,7 @@ class CreditGuard:
     def estimate_and_check(self, estimated_credits: float) -> None:
         """Check if an upcoming operation would exceed the total run budget."""
         projected = self.total_credits_used + estimated_credits
-        if projected >= self.max_budget:
+        if projected > self.max_budget:
             raise CrustdataBudgetExceededError(
                 f"Refusing execution: Projected credit spend ({projected:.2f}) "
                 f"exceeds safety budget of {self.max_budget:.2f} credits."

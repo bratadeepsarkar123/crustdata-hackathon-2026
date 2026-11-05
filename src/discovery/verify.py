@@ -82,6 +82,8 @@ def verify_supplier(
         # 2. POST /company/enrich (2 credits per match) if identified
         if company_id:
             try:
+                if credit_guard:
+                    credit_guard.estimate_and_check(2.0)
                 enrich_data = client.company_enrich(
                     company_id=company_id,
                     fields=["headcount", "locations", "basic_info"],

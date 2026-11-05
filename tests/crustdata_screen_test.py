@@ -71,6 +71,12 @@ class TestCrustdataScreenCompliance(unittest.TestCase):
         self.assertIn("tempsens.com", internal_log)
         self.assertIn("650", internal_log)
 
+    def test_screen_display_simulated_mode(self):
+        screen_output = format_screen_display(self.suppliers, is_simulated=True)
+        self.assertIn("Mode: SIMULATED fixture; no live Crustdata call", screen_output)
+        self.assertIn("[SIMULATED fixture; no live Crustdata call]", screen_output)
+        self.assertNotIn("tempsens", screen_output.lower())
+
 
 if __name__ == "__main__":
     unittest.main()

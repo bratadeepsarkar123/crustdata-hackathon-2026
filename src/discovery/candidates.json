@@ -1,0 +1,167 @@
+[
+  {
+    "display_label": "Supplier 1",
+    "name_internal": "Tempsens Instruments",
+    "primary_domain": "tempsens.com",
+    "year_founded": 1976,
+    "headquarters_internal": "Udaipur, Rajasthan, India",
+    "headcount_total_internal": 650,
+    "industry": "Sensors & Measuring Instruments",
+    "product_line_status": "CONFIRMED",
+    "sources": [
+      {
+        "field": "primary_domain",
+        "endpoint": "POST /company/identify"
+      },
+      {
+        "field": "year_founded",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "headcount.total",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "locations.headquarters",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "basic_info.description",
+        "endpoint": "POST /company/enrich"
+      }
+    ],
+    "confidence": 0.98
+  },
+  {
+    "display_label": "Supplier 2",
+    "name_internal": "Radix Electrosystems",
+    "primary_domain": "radix.co.in",
+    "year_founded": 1980,
+    "headquarters_internal": "Mumbai, Maharashtra, India",
+    "headcount_total_internal": 280,
+    "industry": "Industrial Automation & Instrumentation",
+    "product_line_status": "CONFIRMED",
+    "sources": [
+      {
+        "field": "primary_domain",
+        "endpoint": "POST /company/identify"
+      },
+      {
+        "field": "year_founded",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "headcount.total",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "locations.headquarters",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "basic_info.description",
+        "endpoint": "POST /company/enrich"
+      }
+    ],
+    "confidence": 0.95
+  },
+  {
+    "display_label": "Supplier 3",
+    "name_internal": "Baumer India",
+    "primary_domain": "baumer.com",
+    "year_founded": 1952,
+    "headquarters_internal": "Pune, Maharashtra, India",
+    "headcount_total_internal": 150,
+    "industry": "Electrical & Electronic Manufacturing",
+    "product_line_status": "CONFIRMED",
+    "sources": [
+      {
+        "field": "primary_domain",
+        "endpoint": "POST /company/identify"
+      },
+      {
+        "field": "year_founded",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "headcount.total",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "locations.headquarters",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "basic_info.description",
+        "endpoint": "POST /company/enrich"
+      }
+    ],
+    "confidence": 0.95
+  },
+  {
+    "display_label": "Supplier 4",
+    "name_internal": "Pyrosales",
+    "primary_domain": "pyrosales.com.au",
+    "year_founded": 1977,
+    "headquarters_internal": "Bengaluru, Karnataka, India",
+    "headcount_total_internal": 75,
+    "industry": "Sensors & Measuring Instruments",
+    "product_line_status": "CONFIRMED",
+    "sources": [
+      {
+        "field": "primary_domain",
+        "endpoint": "POST /company/identify"
+      },
+      {
+        "field": "year_founded",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "headcount.total",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "locations.headquarters",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "basic_info.description",
+        "endpoint": "POST /company/enrich"
+      }
+    ],
+    "confidence": 0.95
+  },
+  {
+    "display_label": "Supplier 5",
+    "name_internal": "Sensorcon Instruments",
+    "primary_domain": "sensorcon-instruments.in",
+    "year_founded": 2012,
+    "headquarters_internal": "Ahmedabad, Gujarat, India",
+    "headcount_total_internal": 45,
+    "industry": "Sensors & Measuring Instruments",
+    "product_line_status": "HUMAN_OR_SIMULATED",
+    "sources": [
+      {
+        "field": "primary_domain",
+        "endpoint": "POST /company/identify"
+      },
+      {
+        "field": "year_founded",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "headcount.total",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "locations.headquarters",
+        "endpoint": "POST /company/enrich"
+      },
+      {
+        "field": "basic_info.description",
+        "endpoint": "POST /company/enrich"
+      }
+    ],
+    "confidence": 0.95
+  }
+]

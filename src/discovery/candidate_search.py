@@ -97,6 +97,8 @@ def search_candidate_suppliers(
     else:
         # Live Crustdata call: ranked search first
         try:
+            if credit_guard:
+                credit_guard.estimate_and_check(0.03)
             res = client.company_search(
                 query=item_query,
                 filters=filters if filters else None,
@@ -115,13 +117,23 @@ def search_candidate_suppliers(
         # Fallback to filters-only if ranked query returned nothing
         if not raw_candidates:
             logger.info("Ranked search returned 0 results. Executing filters-only fallback.")
-            res = client.company_search(
-                query=None,
-                filters=filters if filters else None,
-                limit=100,
-                ranked=False,
-            )
-            raw_candidates = res.get("results") or res.get("companies") or []
+            try:
+                if credit_guard:
+                    credit_guard.estimate_and_check(0.03)
+                res = client.company_search(
+                    query=None,
+                    filters=filters if filters else None,
+                    limit=100,
+                    ranked=False,
+                )
+                raw_candidates = res.get("results") or res.get("companies") or []
+                if credit_guard and raw_candidates:
+                    credit_guard.record_usage(0.03 * len(raw_candidates), "search_fallback")
+            except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError, CrustdataBudgetExceededError):
+                raise
+            except Exception as exc:
+                logger.warning("Filters-only search fallback failed: %s", exc)
+                raw_candidates = []
 
     # Map raw candidates to initial candidate supplier records
     candidates: List[Dict[str, Any]] = []
