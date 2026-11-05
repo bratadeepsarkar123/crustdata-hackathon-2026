@@ -153,7 +153,8 @@ class TestCrustdataVerification(unittest.TestCase):
             for i in range(1, 101)
         ]
 
-        # Budget of 10.0 credits: each enrich costs 2.0 credits, so 5 enriches max allowed
+        # Budget of 10.0 credits, strict: the limit must never be reached. Each enrich costs 2.0,
+        # so 4 enriches (8.0) are allowed; the 5th would land exactly on 10.0 and must be refused before paying.
         guard = CreditGuard(max_budget=10.0)
 
         with self.assertRaises(CrustdataBudgetExceededError):
@@ -164,9 +165,9 @@ class TestCrustdataVerification(unittest.TestCase):
                 credit_guard=guard,
             )
 
-        # Assert execution stopped exactly at the budget limit (5 enriches = 10.0 credits)
-        self.assertEqual(mock_client.company_enrich.call_count, 5)
-        self.assertEqual(guard.total_credits_used, 10.0)
+        # Assert execution stopped before reaching the limit (4 enriches = 8.0 credits)
+        self.assertEqual(mock_client.company_enrich.call_count, 4)
+        self.assertEqual(guard.total_credits_used, 8.0)
 
 
 if __name__ == "__main__":

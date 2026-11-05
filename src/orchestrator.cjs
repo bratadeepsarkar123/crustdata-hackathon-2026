@@ -193,7 +193,16 @@ async function runOfflineFixture({
   }
 
   const { chosenQuote, chosenQuoteCurrency } = validateFixture(fixture, requestText, parsedRequest, matchingSample.request);
-  const safeStatePath = safeStateDirectory(stateDirectory);
+  // Default state is a folder named after this exact fixture version, so a changed
+  // fixture never collides with records written for an earlier one, and nothing is
+  // ever deleted on conflict.
+  const fixtureVersion = require('node:crypto')
+    .createHash('sha256')
+    .update(JSON.stringify([fixture.chosen_supplier_label, chosenQuote, chosenQuoteCurrency, fixture.policy_decision, parsedRequest]))
+    .digest('hex')
+    .slice(0, 16);
+  const defaultStateDirectory = path.join(os.tmpdir(), 'contextcon-supplier-agent', 'offline-fixture-state', fixtureVersion);
+  const safeStatePath = safeStateDirectory(stateDirectory || defaultStateDirectory);
   const writer = createPurchaseOrderWriter({ stateDirectory: safeStatePath });
   let writeResult;
   try {
@@ -206,26 +215,6 @@ async function runOfflineFixture({
     });
   } catch {
     reject('PO_WRITE_FAILED', 'The simulated vendor/PO write failed. No writer error details were displayed.');
-  }
-
-  if (!isRecord(writeResult) || !writeResult.vendor_record || !writeResult.purchase_order) {
-    // If running with the default demo state directory and stale fixture records caused a key conflict,
-    // clear the stale demo state and retry once.
-    if (!stateDirectory && writeResult && (writeResult.status === 'KEY_CONFLICT' || writeResult.vendor_status === 'KEY_CONFLICT' || (Array.isArray(writeResult.errors) && writeResult.errors.some((err) => typeof err === 'string' && err.includes('already reserved'))))) {
-      try {
-        fs.rmSync(safeStatePath, { recursive: true, force: true });
-        fs.mkdirSync(safeStatePath, { recursive: true });
-        writeResult = await writer.writeVendorAndPo({
-          request: parsedRequest,
-          supplier: fixture.suppliers.find((supplier) => supplier.display_label === fixture.chosen_supplier_label),
-          quote: chosenQuote,
-          quoteCurrency: chosenQuoteCurrency,
-          policyDecision: fixture.policy_decision,
-        });
-      } catch {
-        // fall through to reject
-      }
-    }
   }
 
   if (!isRecord(writeResult) || !writeResult.vendor_record || !writeResult.purchase_order) {

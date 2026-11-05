@@ -98,7 +98,7 @@ def search_candidate_suppliers(
         # Live Crustdata call: ranked search first
         try:
             if credit_guard:
-                credit_guard.estimate_and_check(0.03)
+                credit_guard.estimate_and_check(0.03 * 100)
             res = client.company_search(
                 query=item_query,
                 filters=filters if filters else None,
@@ -119,7 +119,7 @@ def search_candidate_suppliers(
             logger.info("Ranked search returned 0 results. Executing filters-only fallback.")
             try:
                 if credit_guard:
-                    credit_guard.estimate_and_check(0.03)
+                    credit_guard.estimate_and_check(0.03 * 100)
                 res = client.company_search(
                     query=None,
                     filters=filters if filters else None,
