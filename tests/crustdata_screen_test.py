@@ -36,11 +36,11 @@ class TestCrustdataScreenCompliance(unittest.TestCase):
         screen_output = format_screen_display(self.suppliers)
 
         forbidden_company_names = [
-            "Tempsens",
-            "Radix",
-            "Baumer",
-            "Pyrosales",
-            "Sensorcon",
+            "Alpha",
+            "Bravo",
+            "Charlie",
+            "Delta Pyro",
+            "Echo",
         ]
         for name in forbidden_company_names:
             self.assertNotIn(name.lower(), screen_output.lower(),
@@ -50,12 +50,12 @@ class TestCrustdataScreenCompliance(unittest.TestCase):
         screen_output = format_screen_display(self.suppliers)
 
         forbidden_values = [
-            "tempsens.com",
-            "radix.co.in",
-            "baumer.com",
+            "alpha-thermal.example",
+            "bravo-electro.example",
+            "charlie-sensors.example",
             "650",
             "280",
-            "Udaipur",
+            "City A",
             "Mumbai",
             "Pune",
         ]
@@ -67,15 +67,15 @@ class TestCrustdataScreenCompliance(unittest.TestCase):
         internal_log = format_internal_log(self.suppliers)
 
         # Internal log MUST preserve real names for audit and policy verification
-        self.assertIn("Tempsens Instruments", internal_log)
-        self.assertIn("tempsens.com", internal_log)
+        self.assertIn("Alpha Thermal", internal_log)
+        self.assertIn("alpha-thermal.example", internal_log)
         self.assertIn("650", internal_log)
 
     def test_screen_display_simulated_mode(self):
         screen_output = format_screen_display(self.suppliers, is_simulated=True)
         self.assertIn("Mode: SIMULATED fixture; no live Crustdata call", screen_output)
         self.assertIn("[SIMULATED fixture; no live Crustdata call]", screen_output)
-        self.assertNotIn("tempsens", screen_output.lower())
+        self.assertNotIn("alpha", screen_output.lower())
 
 
 if __name__ == "__main__":

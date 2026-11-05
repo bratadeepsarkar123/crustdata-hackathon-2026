@@ -29,13 +29,13 @@ class TestDemoCitationScript(unittest.TestCase):
             self.assertIn("Internal audit log saved to:", output)
 
             # Assert zero real company names or metrics in stdout
-            for forbidden in ["Tempsens", "Radix", "Baumer", "Pyrosales", "Sensorcon", "tempsens.com", "radix.co.in"]:
+            for forbidden in ["Alpha", "Bravo", "Charlie", "Delta Pyro", "Echo", "alpha-thermal.example", "bravo-electro.example"]:
                 self.assertNotIn(forbidden.lower(), output.lower(), f"Leaked real name/value to stdout: {forbidden}")
 
             # Verify internal audit log was actually written to the file
             with open(temp_log_path, "r", encoding="utf-8") as f:
                 log_content = f.read()
-            self.assertIn("Tempsens Instruments", log_content)
+            self.assertIn("Alpha Thermal", log_content)
         finally:
             if os.path.exists(temp_log_path):
                 os.remove(temp_log_path)

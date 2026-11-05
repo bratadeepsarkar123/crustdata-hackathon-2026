@@ -54,10 +54,10 @@ Each supplier in `suppliers` is a dictionary conforming exactly to `MASTER-HANDO
 ```json
 {
   "display_label": "Supplier 1",
-  "name_internal": "Tempsens Instruments",
-  "primary_domain": "tempsens.com",
+  "name_internal": "Alpha Thermal",
+  "primary_domain": "alpha-thermal.example",
   "year_founded": 1976,
-  "headquarters_internal": "Udaipur, Rajasthan, India",
+  "headquarters_internal": "City A, Region A, India",
   "headcount_total_internal": 650,
   "industry": "Sensors & Measuring Instruments",
   "product_line_status": "CONFIRMED",

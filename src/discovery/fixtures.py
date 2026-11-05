@@ -22,17 +22,17 @@ FIXTURE_COMPANY_SEARCH_RESULTS: Dict[str, Any] = {
     "credits_used": 0.18,
     "results": [
         {
-            "name": "Tempsens Instruments",
-            "domain": "tempsens.com",
+            "name": "Alpha Thermal",
+            "domain": "alpha-thermal.example",
             "year_founded": 1976,
             "industry": "Sensors & Measuring Instruments",
-            "location": "Udaipur, Rajasthan, India",
+            "location": "City A, Region A, India",
             "country": "India",
             "relevance_score": 0.98,
         },
         {
-            "name": "Radix Electrosystems",
-            "domain": "radix.co.in",
+            "name": "Bravo Electro",
+            "domain": "bravo-electro.example",
             "year_founded": 1980,
             "industry": "Industrial Automation & Instrumentation",
             "location": "Mumbai, Maharashtra, India",
@@ -40,8 +40,8 @@ FIXTURE_COMPANY_SEARCH_RESULTS: Dict[str, Any] = {
             "relevance_score": 0.94,
         },
         {
-            "name": "Baumer India",
-            "domain": "baumer.com",
+            "name": "Charlie Sensors",
+            "domain": "charlie-sensors.example",
             "year_founded": 1952,
             "industry": "Electrical & Electronic Manufacturing",
             "location": "Pune, Maharashtra, India",
@@ -49,8 +49,8 @@ FIXTURE_COMPANY_SEARCH_RESULTS: Dict[str, Any] = {
             "relevance_score": 0.91,
         },
         {
-            "name": "Pyrosales",
-            "domain": "pyrosales.com.au",
+            "name": "Delta Pyro",
+            "domain": "delta-pyro.example",
             "year_founded": 1977,
             "industry": "Sensors & Measuring Instruments",
             "location": "Bengaluru, Karnataka, India",
@@ -59,8 +59,8 @@ FIXTURE_COMPANY_SEARCH_RESULTS: Dict[str, Any] = {
         },
         {
             # Designed with empty description to verify HUMAN_OR_SIMULATED status
-            "name": "Sensorcon Instruments",
-            "domain": "sensorcon-instruments.in",
+            "name": "Echo Instruments",
+            "domain": "echo-instruments.example",
             "year_founded": 2012,
             "industry": "Sensors & Measuring Instruments",
             "location": "Ahmedabad, Gujarat, India",
@@ -68,12 +68,12 @@ FIXTURE_COMPANY_SEARCH_RESULTS: Dict[str, Any] = {
             "relevance_score": 0.82,
         },
         {
-            # Duplicate of Tempsens Instruments to test deduplication
-            "name": "Tempsens Instruments Pvt. Ltd.",
-            "domain": "https://www.tempsens.com/",
+            # Duplicate of Alpha Thermal to test deduplication
+            "name": "Alpha Thermal Pvt. Ltd.",
+            "domain": "https://www.alpha-thermal.example/",
             "year_founded": 1976,
             "industry": "Sensors & Measuring Instruments",
-            "location": "Udaipur, Rajasthan, India",
+            "location": "City A, Region A, India",
             "country": "India",
             "relevance_score": 0.79,
         },
@@ -82,34 +82,34 @@ FIXTURE_COMPANY_SEARCH_RESULTS: Dict[str, Any] = {
 
 # Raw Crustdata POST /company/identify responses (free)
 FIXTURE_COMPANY_IDENTIFY_MAP: Dict[str, Dict[str, Any]] = {
-    "tempsens.com": {
+    "alpha-thermal.example": {
         "crustdata_company_id": 918231,
-        "name": "Tempsens Instruments",
-        "domain": "tempsens.com",
+        "name": "Alpha Thermal",
+        "domain": "alpha-thermal.example",
         "verified": True,
     },
-    "radix.co.in": {
+    "bravo-electro.example": {
         "crustdata_company_id": 847291,
-        "name": "Radix Electrosystems",
-        "domain": "radix.co.in",
+        "name": "Bravo Electro",
+        "domain": "bravo-electro.example",
         "verified": True,
     },
-    "baumer.com": {
+    "charlie-sensors.example": {
         "crustdata_company_id": 102938,
-        "name": "Baumer India",
-        "domain": "baumer.com",
+        "name": "Charlie Sensors",
+        "domain": "charlie-sensors.example",
         "verified": True,
     },
-    "pyrosales.com.au": {
+    "delta-pyro.example": {
         "crustdata_company_id": 654321,
-        "name": "Pyrosales",
-        "domain": "pyrosales.com.au",
+        "name": "Delta Pyro",
+        "domain": "delta-pyro.example",
         "verified": True,
     },
-    "sensorcon-instruments.in": {
+    "echo-instruments.example": {
         "crustdata_company_id": 789123,
-        "name": "Sensorcon Instruments",
-        "domain": "sensorcon-instruments.in",
+        "name": "Echo Instruments",
+        "domain": "echo-instruments.example",
         "verified": True,
     },
 }
@@ -120,7 +120,7 @@ FIXTURE_COMPANY_ENRICH_MAP: Dict[int, Dict[str, Any]] = {
     918231: {
         "crustdata_company_id": 918231,
         "headcount": {"total": 650, "range": "501-1000"},
-        "locations": {"headquarters": "Udaipur, Rajasthan, India", "country": "India"},
+        "locations": {"headquarters": "City A, Region A, India", "country": "India"},
         "basic_info": {
             "description": (
                 "Leading manufacturer of industrial temperature sensors, thermocouples, "

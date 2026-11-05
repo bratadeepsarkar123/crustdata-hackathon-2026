@@ -18,9 +18,9 @@ class TestCrustdataVerification(unittest.TestCase):
 
     def test_verify_supplier_fixture_confirmed(self):
         candidate = {
-            "name_internal": "Tempsens Instruments",
-            "primary_domain": "tempsens.com",
-            "headquarters_internal": "Udaipur, India",
+            "name_internal": "Alpha Thermal",
+            "primary_domain": "alpha-thermal.example",
+            "headquarters_internal": "City A, India",
             "headcount_total_internal": None,
             "product_line_status": "HUMAN_OR_SIMULATED",
             "sources": [{"field": "primary_domain", "endpoint": "/company/search"}],
@@ -43,8 +43,8 @@ class TestCrustdataVerification(unittest.TestCase):
     def test_verify_supplier_fixture_empty_description_human_or_simulated(self):
         """Empty basic_info.description must mark product_line_status as HUMAN_OR_SIMULATED."""
         candidate = {
-            "name_internal": "Sensorcon Instruments",
-            "primary_domain": "sensorcon-instruments.in",
+            "name_internal": "Echo Instruments",
+            "primary_domain": "echo-instruments.example",
             "headquarters_internal": "Ahmedabad, India",
             "headcount_total_internal": None,
             "product_line_status": "CONFIRMED",  # Deliberately set to test overwrite

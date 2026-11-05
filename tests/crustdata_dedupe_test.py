@@ -13,33 +13,33 @@ from src.discovery.dedupe import (
 class TestCrustdataDedupe(unittest.TestCase):
 
     def test_normalize_domain(self):
-        self.assertEqual(normalize_domain("https://www.tempsens.com/"), "tempsens.com")
-        self.assertEqual(normalize_domain("http://radix.co.in/products/sensors"), "radix.co.in")
-        self.assertEqual(normalize_domain("WWW2.BAUMER.COM:8080"), "baumer.com")
+        self.assertEqual(normalize_domain("https://www.alpha-thermal.example/"), "alpha-thermal.example")
+        self.assertEqual(normalize_domain("http://bravo-electro.example/products/sensors"), "bravo-electro.example")
+        self.assertEqual(normalize_domain("WWW2.CHARLIE-SENSORS.EXAMPLE:8080"), "charlie-sensors.example")
         self.assertEqual(normalize_domain(""), "")
 
     def test_normalize_company_name(self):
-        self.assertEqual(normalize_company_name("Tempsens Instruments Pvt. Ltd."), "tempsens instruments")
-        self.assertEqual(normalize_company_name("Radix Electrosystems Private Limited"), "radix electrosystems")
-        self.assertEqual(normalize_company_name("Baumer India Inc."), "baumer india")
+        self.assertEqual(normalize_company_name("Alpha Thermal Pvt. Ltd."), "alpha thermal")
+        self.assertEqual(normalize_company_name("Bravo Electro Private Limited"), "bravo electro")
+        self.assertEqual(normalize_company_name("Charlie Sensors Inc."), "charlie sensors")
 
     def test_compute_name_similarity(self):
-        sim_exact = compute_name_similarity("Tempsens Instruments Pvt Ltd", "Tempsens Instruments")
+        sim_exact = compute_name_similarity("Alpha Thermal Pvt Ltd", "Alpha Thermal")
         self.assertEqual(sim_exact, 1.0)
 
-        sim_high = compute_name_similarity("Radix Electrosystems", "Radix Electrosystem Co")
+        sim_high = compute_name_similarity("Bravo Electro", "Bravo Electro Co")
         self.assertGreaterEqual(sim_high, 0.8)
 
-        sim_diff = compute_name_similarity("Honeywell Automation", "Baumer Sensors")
+        sim_diff = compute_name_similarity("Foxtrot Automation", "Charlie Sensors")
         self.assertLess(sim_diff, 0.3)
 
     def test_dedupe_merges_duplicate_records(self):
         raw_candidates = [
             {
-                "name_internal": "Tempsens Instruments",
-                "primary_domain": "tempsens.com",
+                "name_internal": "Alpha Thermal",
+                "primary_domain": "alpha-thermal.example",
                 "year_founded": 1976,
-                "headquarters_internal": "Udaipur, India",
+                "headquarters_internal": "City A, India",
                 "headcount_total_internal": 650,
                 "product_line_status": "CONFIRMED",
                 "sources": [{"field": "domain", "endpoint": "/company/search"}],
@@ -47,10 +47,10 @@ class TestCrustdataDedupe(unittest.TestCase):
             },
             {
                 # Duplicate with different domain formatting and legal suffix
-                "name_internal": "Tempsens Instruments Pvt. Ltd.",
-                "primary_domain": "https://www.tempsens.com/",
+                "name_internal": "Alpha Thermal Pvt. Ltd.",
+                "primary_domain": "https://www.alpha-thermal.example/",
                 "year_founded": 1976,
-                "headquarters_internal": "Udaipur, Rajasthan, India",
+                "headquarters_internal": "City A, Region A, India",
                 "headcount_total_internal": 650,
                 "product_line_status": "CONFIRMED",
                 "sources": [{"field": "headcount", "endpoint": "/company/enrich"}],
@@ -58,8 +58,8 @@ class TestCrustdataDedupe(unittest.TestCase):
             },
             {
                 # Distinct company
-                "name_internal": "Radix Electrosystems",
-                "primary_domain": "radix.co.in",
+                "name_internal": "Bravo Electro",
+                "primary_domain": "bravo-electro.example",
                 "year_founded": 1980,
                 "headquarters_internal": "Mumbai, India",
                 "headcount_total_internal": 280,
@@ -74,12 +74,12 @@ class TestCrustdataDedupe(unittest.TestCase):
         # 3 inputs merged into 2 unique suppliers
         self.assertEqual(len(deduped), 2)
 
-        tempsens = next(s for s in deduped if s["primary_domain"] == "tempsens.com")
-        self.assertIsNotNone(tempsens)
+        alpha = next(s for s in deduped if s["primary_domain"] == "alpha-thermal.example")
+        self.assertIsNotNone(alpha)
         # Check confidence updated
-        self.assertGreaterEqual(tempsens["confidence"], 0.95)
+        self.assertGreaterEqual(alpha["confidence"], 0.95)
         # Check sources combined
-        self.assertEqual(len(tempsens["sources"]), 2)
+        self.assertEqual(len(alpha["sources"]), 2)
 
 
 if __name__ == "__main__":
