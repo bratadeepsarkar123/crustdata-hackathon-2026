@@ -38,6 +38,7 @@
 
 ## 2. What Is Fixture-Only
 - All default tests and demo runs operate offline using realistic fixtures in `src/discovery/fixtures.py` (5 industrial temperature sensor manufacturers: Tempsens, Radix, Baumer, Pyrosales, Sensorcon).
+- The demo runs on fixtures only. Do not start live calls. Wait for the owner's go before anything live.
 - No API keys or network connection required to run tests or the demo script.
 
 ---
