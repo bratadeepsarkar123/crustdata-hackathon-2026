@@ -1,0 +1,194 @@
+{
+  "label": "SIMULATED",
+  "mode": "OFFLINE_FIXTURE_ONLY",
+  "request": {
+    "item": "industrial temperature sensors",
+    "quantity": 500,
+    "budget": 25000,
+    "currency": "USD",
+    "deadline_days": 14,
+    "region": "Bengaluru",
+    "missing_fields": []
+  },
+  "request_label": "SIMULATED",
+  "steps": [
+    {
+      "step": 1,
+      "name": "Parse request",
+      "status": "PARSED",
+      "label": "SIMULATED",
+      "source": "Sample request fixture; parser executed locally"
+    },
+    {
+      "step": 2,
+      "name": "Find candidate suppliers",
+      "status": "FIXTURE",
+      "label": "SIMULATED",
+      "source": "SIMULATED fixture; no live Crustdata call"
+    },
+    {
+      "step": 3,
+      "name": "Verify companies",
+      "status": "FIXTURE",
+      "label": "SIMULATED",
+      "source": "SIMULATED fixture; no live Crustdata call"
+    },
+    {
+      "step": 4,
+      "name": "Dedupe suppliers",
+      "status": "FIXTURE",
+      "label": "SIMULATED",
+      "source": "SIMULATED fixture; no live Crustdata call"
+    },
+    {
+      "step": "5a",
+      "name": "Supplier contact request",
+      "status": "NOT_SENT",
+      "label": "SIMULATED",
+      "source": "No message was sent; prerecorded fixture only"
+    },
+    {
+      "step": "5b",
+      "name": "Supplier reply and quote",
+      "status": "FIXTURE",
+      "label": "SIMULATED",
+      "source": "SIMULATED fixture; no live Crustdata call"
+    },
+    {
+      "step": 6,
+      "name": "Policy comparison",
+      "status": "STUB_DECISION",
+      "label": "SIMULATED",
+      "source": "SIMULATED fixture; no live Crustdata call"
+    },
+    {
+      "step": 7,
+      "name": "Vendor record and purchase order",
+      "status": "WRITTEN",
+      "label": "SIMULATED",
+      "vendor_status": "CREATED",
+      "po_status": "CREATED",
+      "source": "Local filesystem writer; idempotency keys recorded before each write"
+    }
+  ],
+  "suppliers": [
+    {
+      "label": "SIMULATED",
+      "display_label": "Supplier 1",
+      "sources": [
+        {
+          "field": "primary_domain",
+          "endpoint": "POST /company/identify",
+          "source": "SIMULATED fixture; no live Crustdata call"
+        },
+        {
+          "field": "year_founded",
+          "endpoint": "POST /company/enrich",
+          "source": "SIMULATED fixture; no live Crustdata call"
+        },
+        {
+          "field": "headcount.total",
+          "endpoint": "POST /company/enrich",
+          "source": "SIMULATED fixture; no live Crustdata call"
+        },
+        {
+          "field": "locations.headquarters",
+          "endpoint": "POST /company/enrich",
+          "source": "SIMULATED fixture; no live Crustdata call"
+        },
+        {
+          "field": "basic_info.description",
+          "endpoint": "POST /company/enrich",
+          "source": "SIMULATED fixture; no live Crustdata call"
+        }
+      ]
+    },
+    {
+      "label": "SIMULATED",
+      "display_label": "Supplier 2",
+      "sources": [
+        {
+          "field": "primary_domain",
+          "endpoint": "POST /company/identify",
+          "source": "SIMULATED fixture; no live Crustdata call"
+        },
+        {
+          "field": "year_founded",
+          "endpoint": "POST /company/enrich",
+          "source": "SIMULATED fixture; no live Crustdata call"
+        },
+        {
+          "field": "headcount.total",
+          "endpoint": "POST /company/enrich",
+          "source": "SIMULATED fixture; no live Crustdata call"
+        },
+        {
+          "field": "locations.headquarters",
+          "endpoint": "POST /company/enrich",
+          "source": "SIMULATED fixture; no live Crustdata call"
+        },
+        {
+          "field": "basic_info.description",
+          "endpoint": "POST /company/enrich",
+          "source": "SIMULATED fixture; no live Crustdata call"
+        }
+      ]
+    }
+  ],
+  "quotes": [
+    {
+      "label": "SIMULATED",
+      "currency": "USD",
+      "source": "SIMULATED fixture; no live Crustdata call",
+      "quote": {
+        "display_label": "Supplier 1",
+        "unit_price": 42,
+        "lead_time_days": 12,
+        "label": "SIMULATED"
+      }
+    },
+    {
+      "label": "SIMULATED",
+      "currency": "USD",
+      "source": "SIMULATED fixture; no live Crustdata call",
+      "quote": {
+        "display_label": "Supplier 2",
+        "unit_price": 53,
+        "lead_time_days": 20,
+        "label": "SIMULATED"
+      }
+    }
+  ],
+  "policy_decision": {
+    "label": "SIMULATED",
+    "approved": true,
+    "display_label": "Supplier 1",
+    "source": "SIMULATED fixture; no live Crustdata call"
+  },
+  "vendor_record": {
+    "label": "SIMULATED",
+    "currency": "USD",
+    "source": "SIMULATED local writer",
+    "record": {
+      "idempotency_key": "vendor:v1:7b7ab0d1bbea87e1ab258023d9e4b448",
+      "display_label": "Supplier 1",
+      "po_number": "SIM-VENDOR-7B7AB0D1BBEA",
+      "total": 21000,
+      "status": "SIMULATED",
+      "label": "SIMULATED"
+    }
+  },
+  "purchase_order": {
+    "label": "SIMULATED",
+    "currency": "USD",
+    "source": "SIMULATED local writer",
+    "record": {
+      "idempotency_key": "po:v1:7b7ab0d1bbea87e1ab258023d9e4b448",
+      "display_label": "Supplier 1",
+      "po_number": "SIM-PO-7B7AB0D1BBEA",
+      "total": 21000,
+      "status": "SIMULATED",
+      "label": "SIMULATED"
+    }
+  }
+}
