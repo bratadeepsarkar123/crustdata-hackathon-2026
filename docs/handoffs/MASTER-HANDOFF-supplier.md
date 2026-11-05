@@ -266,7 +266,8 @@ Small and mid-size Indian buyers need a regular purchase made. The agent finds v
 
 ### 13.6 Decisions for the owner (product direction)
 
-- **Hackathon demo only, or plan a real product after the event?** This decides whether the data terms and WhatsApp policy are blocking. Recommendation: demo now, and do steps 1 and 4 before any product plan.
+- **Decided (owner, 6 Nov): demo only.** No real business is planned now. The data-terms and WhatsApp-policy checks in section 13.5 step 4 stay on the list in case the plan changes.
+- **Demo rules still apply:** Crustdata citations only (option C), WhatsApp to team phones only, no real supplier or buyer contact. These are not optional for a demo either, because the Crustdata terms cover sharing data outside the team.
 - **Who we interview first:** recommendation is 5 purchase managers at small manufacturers, found through the owner's network.
 
 ### 13.7 Where and how to tap (channels, to confirm)
