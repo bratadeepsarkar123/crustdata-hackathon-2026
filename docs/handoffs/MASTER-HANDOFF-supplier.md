@@ -234,7 +234,7 @@ Small and mid-size Indian buyers need a regular purchase made. The agent finds v
 - **Indian MSMEs:** about 4.72 crore on the Udyam portal (June 2026, secondary source). 7.83 crore+ across Udyam platforms as of 28 Feb 2026 (IBEF, citing government). [medium / high]
 - **Late payments to MSMEs:** about ₹8.1 lakh crore stuck in receivables (Economic Survey 2025-26, via Business Standard, Jan 2026). This shows cash pain, not sourcing pain. [high]
 - **MSMEs that buy goods regularly:** NOT VERIFIED.
-- **MSMEs that struggle to find suppliers:** NOT VERIFIED. This is the core pain, so it needs our own interviews.
+- **MSMEs that struggle to find suppliers:** NOT VERIFIED. This is the core pain; not pursued while the project is demo only.
 - **GeM (government buying portal):** only government bodies buy. Private buyers get no supplier discovery there. Seller counts conflict (22 lakh in 2025 vs 62 lakh+ claimed in Feb 2026). [medium]
 
 ### 13.3 Competition and price points
@@ -249,29 +249,25 @@ Small and mid-size Indian buyers need a regular purchase made. The agent finds v
 
 ### 13.4 Risks a founder checks first
 
-1. **Willingness to pay:** no source shows what small or mid buyers in India pay for sourcing. Test with interviews before building more.
+1. **Willingness to pay:** no source shows what small or mid buyers in India pay for sourcing. Not tested; only relevant if the project becomes real.
 2. **WhatsApp policy:** unsolicited B2B supplier outreach and per-message cost are NOT VERIFIED. Read Meta's WhatsApp Business policy and pricing directly before any real outreach.
 3. **Data terms:** the Crustdata terms prohibit reselling their data as an enrichment service. A paid product needs a different data source or a licence. This blocks the commercial path as it stands.
-4. **Demand evidence:** the sourcing pain itself has no verified figure. Primary interviews are the only source for now.
+4. **Demand evidence:** the sourcing pain itself has no verified figure. Only relevant if the project becomes real.
 
 ### 13.5 Path from idea to MVP (proposed order)
 
 | Step | What | Done when | Owner |
 | --- | --- | --- | --- |
-| 1 | Interview 5 to 10 purchase managers at small manufacturers. Ask how they find suppliers, how often they buy, what it costs them, and what they would pay. | Notes on pain, frequency and price. Written up with dates. | Owner (interviews); CTO desk (notes) |
-| 2 | Pick the wedge: one category (industrial sensors), one buyer type, one channel (WhatsApp). | Decision recorded. | Owner decides |
-| 3 | Build the hackathon MVP: the seven-step flow with simulated supplier replies (sections 4 and 5). | Demo runs end to end; labels and citations shown. | Team (sections 5 and 12) |
-| 4 | Read Meta's WhatsApp policy and the Crustdata terms with a lawyer or the owner before any real use. | Written note: allowed, not allowed, or needs a change. | Owner |
-| 5 | Pilot with three real buyers and real suppliers, handled by hand at first. Measure time to a shortlist and reply rate. | Numbers recorded, go or stop decided. | Owner |
+| 1 | Pick the wedge: one category (industrial sensors), one buyer type, one channel (WhatsApp). | Decision recorded. | Owner decides |
+| 2 | Build the hackathon MVP: the seven-step flow with simulated supplier replies (sections 4 and 5). | Demo runs end to end; labels and citations shown. | Team (sections 5 and 12) |
+| 3 | Read Meta's WhatsApp policy and the Crustdata terms with a lawyer or the owner before any real use. | Written note: allowed, not allowed, or needs a change. | Owner |
+| 4 | **Only if the project becomes real (not planned):** pilot with real buyers and suppliers. | Not started. | Owner |
 
 ### 13.6 Decisions for the owner (product direction)
 
 - **Decided (owner, 6 Nov): demo only.** No real business is planned now. The data-terms and WhatsApp-policy checks in section 13.5 step 4 stay on the list in case the plan changes.
 - **Demo rules still apply:** Crustdata citations only (option C), WhatsApp to team phones only, no real supplier or buyer contact. These are not optional for a demo either, because the Crustdata terms cover sharing data outside the team.
-- **Who we interview first:** recommendation is 5 purchase managers at small manufacturers, found through the owner's network.
 
 ### 13.7 Where and how to tap (channels, to confirm)
 
-- Owner's network of small manufacturers and buyers (interviews, pilot).
-- Trade associations for small manufacturers (NOT VERIFIED as an approach; check first).
-- WhatsApp Business for buyer follow-up, once the policy check in step 4 is done.
+- WhatsApp Business for buyer follow-up, only if the project becomes real and the policy check (step 3) is done.
