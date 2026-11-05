@@ -47,6 +47,8 @@ node --test tests/e2e.cjs
 node --test src/intake/request-reader.test.cjs src/state/idempotency.test.cjs src/po/writer.test.cjs tests/e2e.cjs
 ```
 
+Run the complete suite from a checkout outside the OS temporary directory; test 10 checks a checkout-derived path outside temp and is skipped when the checkout is within temp.
+
 The end-to-end suite covers all three sample parses, the offline step 1–7 run, repeated idempotent writes, missing/ambiguous/mismatched requests, failed policy and quote gates, quote currency checks, supplier-value privacy, citation injection, and blocked network functions.
 
 ## How it is built

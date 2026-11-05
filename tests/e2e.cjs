@@ -231,7 +231,21 @@ test('supplier internals and policy reason stay hidden; injected citation URL is
   assert.equal(fs.existsSync(poisonedState), false);
 });
 
-test('unsafe state paths outside the OS temporary directory are rejected', async () => {
+test('unsafe state paths outside the OS temporary directory are rejected', async (t) => {
+  const checkoutRoot = fs.realpathSync(path.resolve(__dirname, '..'));
+  const temporaryRoot = fs.realpathSync(os.tmpdir());
+  const relativeCheckout = path.relative(temporaryRoot, checkoutRoot);
+  const checkoutIsInsideTemporaryRoot = relativeCheckout === '' || (
+    relativeCheckout !== '..' &&
+    !relativeCheckout.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(relativeCheckout)
+  );
+
+  if (checkoutIsInsideTemporaryRoot) {
+    t.skip('checkout is inside the OS temporary directory; this test requires a checkout outside it');
+    return;
+  }
+
   await assert.rejects(
     runOfflineFixture({ stateDirectory: path.resolve(__dirname, '..', 'unsafe-state') }),
     (error) => error.code === 'UNSAFE_STATE_DIRECTORY',
