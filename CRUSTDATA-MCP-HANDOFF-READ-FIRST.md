@@ -3,6 +3,8 @@
 **Who this is for:** every teammate and every AI agent on this team (ContextCon 04).
 **What it saves you:** the research and the paid test calls. Do not repeat them. Each builder has their own 15,000 credits (see `rules.md` section 6), so use your own key for your own work.
 
+**Already done for the Supplier idea:** section 12. Read it before running any call, so you do not repeat the checks.
+
 **Verified:** 2026-11-06 IST, against the live server `https://install.crustdata.com/mcp`, by the repo owner's Claude Code session. Every claim below is marked **verified** (run live, with the result), **plan-blocked** (returns 403 on our key), or **not run** (with the reason). Re-check the free items in section 9 before relying on this for the demo.
 
 ---
@@ -253,3 +255,45 @@ Paid calls only. Free calls are in section 4. Every credit figure is the server'
 - Tool schemas: `list_tools` and `get_schema(["tool_name"], detail: "summary" | "detailed")` on the live server.
 - Team rules: `rules.md` (sections 3, 4, 6 and 7 apply to Crustdata use).
 - This file was written from live results, not from the docs alone. Where a doc and a live result disagree, the live result wins, and it is listed above.
+
+---
+
+## 12. Already done for the Supplier idea (2026-11-06): do not repeat
+
+This section records checks already run by the repo owner's Claude session, so a teammate's agent can skip them. Free calls are marked (free). Paid calls are listed with credits. Nothing here needs a new paid call to confirm.
+
+**Context:** the Supplier idea is one agent with two halves. Discovery and verification use Crustdata (companies only). Quotes, policy and PO are simulated. Plan: `docs/handoffs/MASTER-HANDOFF-supplier.md` on branch `docs/corrected-crustdata-handoff` (GitHub issue #5). Discovery work is in draft PR #9 on `feat/issue-7-discovery` (issue #7, owner AdityaChittora).
+
+### 12.1 Feasibility (done, verified live)
+
+- **Account:** `account_credits` returns `account.credits`. Balance read 15,225.31 credits. Owner's key, not a builder's key.
+- **Endpoints needed, all enabled:** `company_search`, `company_identify`, `company_enrich`, `company_autocomplete` (free). Nothing else. No 403 unlock is needed for this idea.
+- **Discovery by what a company makes:** use ranked `company_search` with `search: { query, mode: "hybrid" }`, `limit` up to 100, with filters as hard limits (location). Filters alone (industry and headquarters) are too coarse for "makers of industrial temperature sensors".
+- **Industry filter values:** closed set. Resolve with `company_autocomplete` before filtering. A guessed value returns zero rows silently.
+- **Verification:** `company_identify` (free) first, then `company_enrich` by `crustdata_company_id` (2 credits per match). `headcount` and `locations` are plan-gated on identify, so request them only through enrich.
+- **Product-line field:** `basic_info.description`. It is in the enrich projectable fields (checked with free `get_schema`). If it is empty, mark the product line `HUMAN_OR_SIMULATED`.
+- **Gated on enrich (do not request):** `maps`, `social_posts`, `technographics`, `hiring.recent_openings`, `social_profiles.crunchbase`. Gated on search: `social_profiles.crunchbase`.
+- **Schema fields checked (free):** `locations.headquarters`, `headcount.total`, `taxonomy.professional_network_industry`, `basic_info.name`, `basic_info.primary_domain`, `basic_info.year_founded`, `basic_info.employee_count_range`.
+- **Person fields checked (free):** `department` is `basic_profile.normalized_title.department`. `linkedin_id` and `tenure_months` are not in the schema. Nearest are `social_handles.professional_network_identifier.profile_url` and `experience.employment_details.current.years_at_company_raw`.
+- **Open:** the meaning of `metadata.date_added` on jobs is not defined in the schema. Unverified.
+
+### 12.2 Paid tests run for this (total 0.30 credits)
+
+| Call                                                                         | Credits | Result                                                                                  |
+| ---------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------- |
+| `company_search`, ranked, sensor query, `limit: 5`, `fields: ["basic_info"]` | 0.15    | 5 of 5 relevant sensor/thermocouple makers                                              |
+| `company_search`, ranked, pump query, `limit: 5`, `fields: ["basic_info"]`   | 0.15    | 5 of 5 relevant pump makers (one has a mixed product range, so verify the product line) |
+
+Company names from these results are deliberately not written here. Keep them in the internal log only.
+
+### 12.3 Do not repeat
+
+- No more paid calls for the Supplier feasibility. The two category tests above are the second check.
+- Do not re-run the schema reads listed in 12.1. Re-check only if the account plan changes.
+- Do not test person or job endpoints for this idea. It is company-only.
+
+### 12.4 Decisions that are not final
+
+- **Demo option (B or C):** not confirmed. The Supplier build uses option C (citations only) until the owner confirms in writing. Reports conflict: one says the owner chose B in the chat, another says C.
+- **Admin handle `debugat2am`:** a real collaborator on the repo, but the owner has not confirmed it is the right person for the invite.
+- **Display rule:** supplier names are shown as labels ("Supplier 1", ...) on every screen, with citations. Real names stay in the internal log only.
