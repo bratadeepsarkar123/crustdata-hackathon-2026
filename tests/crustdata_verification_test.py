@@ -4,7 +4,9 @@ import unittest
 from unittest.mock import MagicMock
 
 from src.crustdata.client import CrustdataClient
+from src.crustdata.credits import CreditGuard
 from src.crustdata.exceptions import (
+    CrustdataBudgetExceededError,
     CrustdataCreditsExhaustedError,
     CrustdataPlanGatedError,
     CrustdataRateLimitError,
@@ -32,10 +34,10 @@ class TestCrustdataVerification(unittest.TestCase):
 
         # Check citations
         endpoints = [s["endpoint"] for s in verified["sources"]]
-        self.assertIn("/company/enrich", endpoints)
+        self.assertIn("POST /company/enrich", endpoints)
         fields = [s["field"] for s in verified["sources"]]
-        self.assertIn("headcount", fields)
-        self.assertIn("locations", fields)
+        self.assertIn("headcount.total", fields)
+        self.assertIn("locations.headquarters", fields)
         self.assertIn("basic_info.description", fields)
 
     def test_verify_supplier_fixture_empty_description_human_or_simulated(self):
@@ -133,6 +135,38 @@ class TestCrustdataVerification(unittest.TestCase):
         # First candidate identified, then enrich raised 403, candidate 2 was never processed
         self.assertEqual(mock_client.company_identify.call_count, 1)
         self.assertEqual(mock_client.company_enrich.call_count, 1)
+
+    def test_verify_all_stops_at_budget_with_100_candidates(self):
+        """Must record usage after each identify/enrich call and stop when budget is reached."""
+        mock_client = MagicMock(spec=CrustdataClient)
+        mock_client.allow_live = True
+        mock_client.company_identify.return_value = {"crustdata_company_id": 999}
+        mock_client.company_enrich.return_value = {
+            "headcount": {"total": 50},
+            "locations": {"headquarters": "City, Country"},
+            "basic_info": {"description": "Sensors"},
+        }
+
+        # 100 candidate suppliers
+        candidates = [
+            {"name_internal": f"Candidate {i}", "primary_domain": f"cand{i}.com"}
+            for i in range(1, 101)
+        ]
+
+        # Budget of 10.0 credits: each enrich costs 2.0 credits, so 5 enriches max allowed
+        guard = CreditGuard(max_budget=10.0)
+
+        with self.assertRaises(CrustdataBudgetExceededError):
+            verify_all_candidates(
+                candidates=candidates,
+                client=mock_client,
+                use_fixtures=False,
+                credit_guard=guard,
+            )
+
+        # Assert execution stopped exactly at the budget limit (5 enriches = 10.0 credits)
+        self.assertEqual(mock_client.company_enrich.call_count, 5)
+        self.assertEqual(guard.total_credits_used, 10.0)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -28,6 +29,7 @@ def run_discovery_pipeline(
     client: Optional[CrustdataClient] = None,
     use_fixtures: bool = True,
     industry_filter: Optional[str] = None,
+    credit_guard: Optional[CreditGuard] = None,
 ) -> List[Dict[str, Any]]:
     """Execute complete Discovery pipeline (Steps 2, 3, 4).
 
@@ -39,8 +41,9 @@ def run_discovery_pipeline(
     """
     logger.info("Starting supplier discovery for item: %s", request.get("item"))
 
+    guard = credit_guard
     # Live path guard: verify credit balance and enforce CreditGuard before any live call
-    if not use_fixtures and client and client.allow_live:
+    if not use_fixtures and client and client.allow_live and guard is None:
         estimated_cost = calculate_batch_cost(
             search_results_count=100,
             identify_count=10,
@@ -74,6 +77,7 @@ def run_discovery_pipeline(
         client=client,
         use_fixtures=use_fixtures,
         industry_filter=industry_filter,
+        credit_guard=guard,
     )
     logger.info("Found %d candidate suppliers in Step 2", len(raw_candidates))
 
@@ -82,6 +86,7 @@ def run_discovery_pipeline(
         candidates=raw_candidates,
         client=client,
         use_fixtures=use_fixtures,
+        credit_guard=guard,
     )
     logger.info("Verified %d candidates in Step 3", len(verified_candidates))
 
@@ -89,17 +94,54 @@ def run_discovery_pipeline(
     deduped_suppliers = dedupe_candidates(verified_candidates)
     logger.info("Retained %d unique suppliers after Step 4 deduplication", len(deduped_suppliers))
 
-    # Assign neutral display labels ("Supplier 1", "Supplier 2", ...)
-    for idx, supplier in enumerate(deduped_suppliers, start=1):
-        supplier["display_label"] = f"Supplier {idx}"
+    # Format exactly to Section 6 / PR #10 contract shape (SUPPLIER_KEYS)
+    SUPPLIER_KEYS = [
+        "display_label",
+        "name_internal",
+        "primary_domain",
+        "year_founded",
+        "headquarters_internal",
+        "headcount_total_internal",
+        "industry",
+        "product_line_status",
+        "sources",
+        "confidence",
+    ]
 
-    return deduped_suppliers
+    clean_suppliers = []
+    for idx, supplier in enumerate(deduped_suppliers, start=1):
+        record = {
+            "display_label": f"Supplier {idx}",
+            "name_internal": supplier.get("name_internal"),
+            "primary_domain": supplier.get("primary_domain"),
+            "year_founded": supplier.get("year_founded"),
+            "headquarters_internal": supplier.get("headquarters_internal"),
+            "headcount_total_internal": supplier.get("headcount_total_internal"),
+            "industry": supplier.get("industry"),
+            "product_line_status": supplier.get("product_line_status", "HUMAN_OR_SIMULATED"),
+            "sources": supplier.get("sources", []),
+            "confidence": supplier.get("confidence", 0.95),
+        }
+        clean_suppliers.append(record)
+
+    return clean_suppliers
+
+
+def to_supplier_display(supplier: Dict[str, Any]) -> Dict[str, Any]:
+    """Projects supplier to screen display under Option C (labels & citations only)."""
+    return {
+        "display_label": supplier.get("display_label"),
+        "sources": [
+            {"field": s["field"], "endpoint": s["endpoint"]}
+            for s in supplier.get("sources", [])
+        ],
+    }
 
 
 def format_screen_display(suppliers: List[Dict[str, Any]]) -> str:
     """Format suppliers for screen display strictly adhering to Option C.
 
-    Option C Rules (Section 8):
+    Option C Rules (Section 8 & PR #10 contracts):
     - Screens show DISPLAY LABELS ("Supplier 1", "Supplier 2", ...) ONLY.
     - Citations only ("Source: Crustdata", endpoint, and field).
     - NEVER show company values (e.g. headcount numbers, city names, domain URLs).
@@ -120,13 +162,17 @@ def format_screen_display(suppliers: List[Dict[str, Any]]) -> str:
         conf = supplier.get("confidence", 0.0)
 
         lines.append(f"[{label}] - Match Confidence: {conf:.0%}")
-        lines.append(f"  • Company Identity : Source: Crustdata (POST /company/identify)")
-        lines.append(f"  • Primary Domain   : Source: Crustdata (POST /company/search, field: primary_domain)")
-        lines.append(f"  • Headcount Total  : Source: Crustdata (POST /company/enrich, field: headcount)")
-        lines.append(f"  • Headquarters     : Source: Crustdata (POST /company/enrich, field: locations)")
-        lines.append(f"  • Product Line     : Source: Crustdata (POST /company/enrich, field: basic_info.description) [{status}]")
+        for src in supplier.get("sources", []):
+            field = src.get("field")
+            endpoint = src.get("endpoint")
+            extra = f" [{status}]" if field == "basic_info.description" else ""
+            lines.append(f"  • {field}: Source: Crustdata ({endpoint}){extra}")
         lines.append("")
 
+    lines.append("--- Contract Screen Projection (JSON) ---")
+    display_records = [to_supplier_display(s) for s in suppliers]
+    lines.append(json.dumps(display_records, indent=2))
+    lines.append("")
     lines.append("Note: Real company names and demographic metrics are logged internally in _internal fields.")
     return "\n".join(lines)
 

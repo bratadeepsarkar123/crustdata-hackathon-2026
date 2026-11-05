@@ -6,7 +6,9 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from src.crustdata.client import CrustdataClient
+from src.crustdata.credits import CreditGuard
 from src.crustdata.exceptions import (
+    CrustdataBudgetExceededError,
     CrustdataCreditsExhaustedError,
     CrustdataPlanGatedError,
     CrustdataRateLimitError,
@@ -48,6 +50,7 @@ def search_candidate_suppliers(
     client: Optional[CrustdataClient] = None,
     use_fixtures: bool = False,
     industry_filter: Optional[str] = None,
+    credit_guard: Optional[CreditGuard] = None,
 ) -> List[Dict[str, Any]]:
     """Step 2: Find candidate suppliers using ranked search with location filters as hard limits.
 
@@ -101,7 +104,9 @@ def search_candidate_suppliers(
                 ranked=True,
             )
             raw_candidates = res.get("results") or res.get("companies") or []
-        except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError):
+            if credit_guard and raw_candidates:
+                credit_guard.record_usage(0.03 * len(raw_candidates), "search")
+        except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError, CrustdataBudgetExceededError):
             raise
         except Exception as exc:
             logger.warning("Ranked search failed (%s); trying filters-only fallback", exc)
@@ -130,8 +135,7 @@ def search_candidate_suppliers(
             "headcount_total_internal": None,  # Will be fetched on enrich
             "product_line_status": "HUMAN_OR_SIMULATED",  # Verified in Step 3
             "sources": [
-                {"field": "name", "endpoint": "/company/search"},
-                {"field": "primary_domain", "endpoint": "/company/search"},
+                {"field": "primary_domain", "endpoint": "POST /company/identify"},
             ],
             "confidence": round(float(item.get("relevance_score", 0.90)), 2),
         }

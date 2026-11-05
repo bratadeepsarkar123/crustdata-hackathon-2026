@@ -27,10 +27,10 @@ class TestCrustdataScreenCompliance(unittest.TestCase):
         self.assertIn("[Supplier 2]", screen_output)
 
         # Must cite endpoints and fields
-        self.assertIn("Source: Crustdata (POST /company/identify)", screen_output)
-        self.assertIn("Source: Crustdata (POST /company/search, field: primary_domain)", screen_output)
-        self.assertIn("Source: Crustdata (POST /company/enrich, field: headcount)", screen_output)
-        self.assertIn("Source: Crustdata (POST /company/enrich, field: locations)", screen_output)
+        self.assertIn("primary_domain: Source: Crustdata (POST /company/identify)", screen_output)
+        self.assertIn("headcount.total: Source: Crustdata (POST /company/enrich)", screen_output)
+        self.assertIn("locations.headquarters: Source: Crustdata (POST /company/enrich)", screen_output)
+        self.assertIn("basic_info.description: Source: Crustdata (POST /company/enrich)", screen_output)
 
     def test_screen_display_never_leaks_real_company_names(self):
         screen_output = format_screen_display(self.suppliers)

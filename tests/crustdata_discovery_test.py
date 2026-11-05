@@ -26,7 +26,7 @@ class TestCrustdataDiscovery(unittest.TestCase):
             self.assertEqual(cand["product_line_status"], "HUMAN_OR_SIMULATED")
             # Verify citations recorded
             endpoints = [s["endpoint"] for s in cand["sources"]]
-            self.assertIn("/company/search", endpoints)
+            self.assertIn("POST /company/identify", endpoints)
 
     def test_discovery_location_hard_limit(self):
         request = {
@@ -112,8 +112,11 @@ class TestCrustdataDiscovery(unittest.TestCase):
             run_discovery_pipeline(request=request, client=mock_client, use_fixtures=False)
 
         self.assertIn("Crustdata credits insufficient", str(ctx.exception))
-        # Ensure fail-closed: NO company search calls were made!
+        # Ensure fail-closed: NO API calls made (search, identify, enrich, autocomplete)
         mock_client.company_search.assert_not_called()
+        mock_client.company_identify.assert_not_called()
+        mock_client.company_enrich.assert_not_called()
+        mock_client.company_autocomplete.assert_not_called()
 
     def test_live_pipeline_fails_closed_when_credits_check_fails(self):
         """Pipeline must fail closed if credit balance cannot be verified."""
@@ -126,7 +129,11 @@ class TestCrustdataDiscovery(unittest.TestCase):
             run_discovery_pipeline(request=request, client=mock_client, use_fixtures=False)
 
         self.assertIn("Credit pre-flight check failed", str(ctx.exception))
+        # Ensure fail-closed: NO API calls made (search, identify, enrich, autocomplete)
         mock_client.company_search.assert_not_called()
+        mock_client.company_identify.assert_not_called()
+        mock_client.company_enrich.assert_not_called()
+        mock_client.company_autocomplete.assert_not_called()
 
 
 if __name__ == "__main__":

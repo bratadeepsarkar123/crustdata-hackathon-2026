@@ -41,11 +41,11 @@ def run_demo(
     print(screen_output)
     print()
 
-    # 2. Verify Option C Compliance
+    # 2. Verify Option C Compliance (no real name, domain, HQ or headcount on stdout or stderr)
     real_names = [s.get("name_internal") for s in suppliers if s.get("name_internal")]
     forbidden_in_screen = [name for name in real_names if name in screen_output]
     if forbidden_in_screen:
-        print(f"ERROR: Real company names leaked to screen: {forbidden_in_screen}", file=sys.stderr)
+        print("ERROR: Option C compliance failure: unmasked supplier identity detected in screen view.", file=sys.stderr)
         return 1
 
     print("Option C Verification: PASSED. All screens show display labels & citations only.")

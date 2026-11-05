@@ -6,7 +6,9 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from src.crustdata.client import CrustdataClient
+from src.crustdata.credits import CreditGuard
 from src.crustdata.exceptions import (
+    CrustdataBudgetExceededError,
     CrustdataCreditsExhaustedError,
     CrustdataPlanGatedError,
     CrustdataRateLimitError,
@@ -21,6 +23,7 @@ def verify_supplier(
     candidate: Dict[str, Any],
     client: Optional[CrustdataClient] = None,
     use_fixtures: bool = False,
+    credit_guard: Optional[CreditGuard] = None,
 ) -> Dict[str, Any]:
     """Step 3: Verify company candidate.
 
@@ -62,13 +65,15 @@ def verify_supplier(
                 names=[name] if name else None,
                 domains=[domain] if domain else None,
             )
+            if credit_guard:
+                credit_guard.record_usage(0.0, "identify")
             # Crustdata identify typically returns company info with crustdata_company_id
             if isinstance(ident_res, dict):
                 company_id = ident_res.get("crustdata_company_id")
                 if not company_id and "results" in ident_res and ident_res["results"]:
                     company_id = ident_res["results"][0].get("crustdata_company_id")
-        except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError):
-            # Critical API errors must stop the entire run immediately
+        except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError, CrustdataBudgetExceededError):
+            # Critical API & budget errors must stop the entire run immediately
             raise
         except Exception as exc:
             logger.warning("Identify failed for %s (%s): %s", name, domain, exc)
@@ -81,8 +86,10 @@ def verify_supplier(
                     company_id=company_id,
                     fields=["headcount", "locations", "basic_info"],
                 )
-            except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError):
-                # Critical API errors must stop the entire run immediately
+                if credit_guard:
+                    credit_guard.record_usage(2.0, "enrich")
+            except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError, CrustdataBudgetExceededError):
+                # Critical API & budget errors must stop the entire run immediately
                 raise
             except Exception as exc:
                 logger.warning("Enrich failed for company_id %s: %s", company_id, exc)
@@ -92,20 +99,28 @@ def verify_supplier(
     sources: List[Dict[str, str]] = list(verified.get("sources", []))
 
     if enrich_data:
+        # primary_domain citation
+        if {"field": "primary_domain", "endpoint": "POST /company/identify"} not in sources:
+            sources.append({"field": "primary_domain", "endpoint": "POST /company/identify"})
+
+        # year_founded
+        if verified.get("year_founded") and {"field": "year_founded", "endpoint": "POST /company/enrich"} not in sources:
+            sources.append({"field": "year_founded", "endpoint": "POST /company/enrich"})
+
         # Headcount
         headcount_obj = enrich_data.get("headcount", {})
         total_hc = headcount_obj.get("total") if isinstance(headcount_obj, dict) else headcount_obj
         verified["headcount_total_internal"] = total_hc
-        if {"field": "headcount", "endpoint": "/company/enrich"} not in sources:
-            sources.append({"field": "headcount", "endpoint": "/company/enrich"})
+        if {"field": "headcount.total", "endpoint": "POST /company/enrich"} not in sources:
+            sources.append({"field": "headcount.total", "endpoint": "POST /company/enrich"})
 
         # Locations
         loc_obj = enrich_data.get("locations", {})
         hq = loc_obj.get("headquarters") if isinstance(loc_obj, dict) else loc_obj
         if hq:
             verified["headquarters_internal"] = hq
-        if {"field": "locations", "endpoint": "/company/enrich"} not in sources:
-            sources.append({"field": "locations", "endpoint": "/company/enrich"})
+        if {"field": "locations.headquarters", "endpoint": "POST /company/enrich"} not in sources:
+            sources.append({"field": "locations.headquarters", "endpoint": "POST /company/enrich"})
 
         # Product-line check via basic_info.description
         basic_info = enrich_data.get("basic_info", {})
@@ -116,8 +131,8 @@ def verify_supplier(
         else:
             verified["product_line_status"] = "HUMAN_OR_SIMULATED"
 
-        if {"field": "basic_info.description", "endpoint": "/company/enrich"} not in sources:
-            sources.append({"field": "basic_info.description", "endpoint": "/company/enrich"})
+        if {"field": "basic_info.description", "endpoint": "POST /company/enrich"} not in sources:
+            sources.append({"field": "basic_info.description", "endpoint": "POST /company/enrich"})
 
         verified["confidence"] = max(verified.get("confidence", 0.0), 0.95)
     else:
@@ -133,6 +148,16 @@ def verify_all_candidates(
     candidates: List[Dict[str, Any]],
     client: Optional[CrustdataClient] = None,
     use_fixtures: bool = False,
+    credit_guard: Optional[CreditGuard] = None,
 ) -> List[Dict[str, Any]]:
     """Verify each candidate in the candidate list."""
-    return [verify_supplier(cand, client=client, use_fixtures=use_fixtures) for cand in candidates]
+    results = []
+    for cand in candidates:
+        verified = verify_supplier(
+            candidate=cand,
+            client=client,
+            use_fixtures=use_fixtures,
+            credit_guard=credit_guard,
+        )
+        results.append(verified)
+    return results
