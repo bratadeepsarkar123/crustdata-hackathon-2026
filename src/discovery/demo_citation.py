@@ -12,7 +12,11 @@ import sys
 from src.discovery.service import run_discovery_pipeline, format_screen_display, format_internal_log
 
 
-def run_demo(category: str = "industrial temperature sensors", region: str = "India") -> int:
+def run_demo(
+    category: str = "industrial temperature sensors",
+    region: str = "India",
+    log_file: str = "discovery_internal_audit.log",
+) -> int:
     request = {
         "item": category,
         "quantity": 500,
@@ -48,8 +52,10 @@ def run_demo(category: str = "industrial temperature sensors", region: str = "In
     print("All internal names and metrics are strictly preserved in internal logs.")
     print()
 
-    # 3. Print internal log header snippet
-    print(format_internal_log(suppliers))
+    # 3. Save internal audit log to file (never printed to stdout / screen)
+    with open(log_file, "w", encoding="utf-8") as f:
+        f.write(format_internal_log(suppliers) + "\n")
+    print(f"Internal audit log saved to: {log_file} (retained for policy checks; omitted from screen).")
     print()
     return 0
 

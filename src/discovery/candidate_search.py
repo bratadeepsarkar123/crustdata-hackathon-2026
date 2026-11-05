@@ -6,6 +6,11 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from src.crustdata.client import CrustdataClient
+from src.crustdata.exceptions import (
+    CrustdataCreditsExhaustedError,
+    CrustdataPlanGatedError,
+    CrustdataRateLimitError,
+)
 from .fixtures import FIXTURE_COMPANY_SEARCH_RESULTS, FIXTURE_INDUSTRY_AUTOCOMPLETE
 
 logger = logging.getLogger("discovery.search")
@@ -30,6 +35,8 @@ def resolve_industry_filter(
             if isinstance(suggestions[0], dict):
                 return suggestions[0].get("value") or suggestions[0].get("name") or industry_query
             return str(suggestions[0])
+    except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError):
+        raise
     except Exception as exc:
         logger.warning("Industry autocomplete resolution failed: %s; falling back to original", exc)
 
@@ -94,6 +101,8 @@ def search_candidate_suppliers(
                 ranked=True,
             )
             raw_candidates = res.get("results") or res.get("companies") or []
+        except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError):
+            raise
         except Exception as exc:
             logger.warning("Ranked search failed (%s); trying filters-only fallback", exc)
             raw_candidates = []

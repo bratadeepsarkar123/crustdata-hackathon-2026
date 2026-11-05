@@ -6,6 +6,11 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from src.crustdata.client import CrustdataClient
+from src.crustdata.exceptions import (
+    CrustdataCreditsExhaustedError,
+    CrustdataPlanGatedError,
+    CrustdataRateLimitError,
+)
 from .fixtures import FIXTURE_COMPANY_ENRICH_MAP, FIXTURE_COMPANY_IDENTIFY_MAP
 from .dedupe import normalize_domain
 
@@ -62,6 +67,9 @@ def verify_supplier(
                 company_id = ident_res.get("crustdata_company_id")
                 if not company_id and "results" in ident_res and ident_res["results"]:
                     company_id = ident_res["results"][0].get("crustdata_company_id")
+        except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError):
+            # Critical API errors must stop the entire run immediately
+            raise
         except Exception as exc:
             logger.warning("Identify failed for %s (%s): %s", name, domain, exc)
             company_id = None
@@ -73,6 +81,9 @@ def verify_supplier(
                     company_id=company_id,
                     fields=["headcount", "locations", "basic_info"],
                 )
+            except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError):
+                # Critical API errors must stop the entire run immediately
+                raise
             except Exception as exc:
                 logger.warning("Enrich failed for company_id %s: %s", company_id, exc)
                 enrich_data = None

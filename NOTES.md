@@ -60,12 +60,29 @@ Files owned by Person 2:
 - Implemented Step 4 deduplication (`src/discovery/dedupe.py`) with domain normalization and similarity-based merging.
 - Implemented Option C display formatter and internal audit logger (`src/discovery/service.py`).
 - Created demo citation runner (`demo_citations.py` and `src/discovery/demo_citation.py`).
-- Verified all 28 unit tests across `tests/crustdata*`:
-  - `tests/crustdata_client_test.py` (10 tests) - PASSED
-  - `tests/crustdata_discovery_test.py` (5 tests) - PASSED
-  - `tests/crustdata_verification_test.py` (3 tests) - PASSED
-  - `tests/crustdata_dedupe_test.py` (4 tests) - PASSED
-  - `tests/crustdata_screen_test.py` (4 tests) - PASSED
-  - `tests/crustdata_fixtures_test.py` (1 test) - PASSED
-  - `tests/crustdata_citations_test.py` (1 test) - PASSED
-- Ran `python demo_citations.py` confirming Option C compliance: neutral labels only, full fact citations, no leaked company values or names on screen.
+
+---
+
+## 4. Owner Review (Bratadeep) Feedback & Resolutions
+Addressing the four feedback items from issue #7 review:
+
+1. **Errors stop the run (`src/discovery/verify.py` & `src/discovery/candidate_search.py`):**
+   - Re-raised `CrustdataCreditsExhaustedError` (402), `CrustdataPlanGatedError` (403), and `CrustdataRateLimitError` (429) across candidate identify, enrich, search, and autocomplete operations.
+   - Added unit test `test_verify_all_stops_immediately_on_402_called_only_once` asserting that `company_identify` is called exactly once when a 402 is raised and loop stops immediately.
+   - Added unit test `test_verify_all_stops_immediately_on_403` asserting immediate halt on plan-gated errors.
+
+2. **Credit guard enforced on live path (`src/discovery/service.py`):**
+   - Live execution path invokes `check_account_credits` and pre-checks projected spend against balance and safety budget (< 200 credits).
+   - Fails closed (`CrustdataCreditsExhaustedError`) before making any network calls if credits are insufficient or cannot be queried.
+   - Added unit tests `test_live_pipeline_fails_closed_when_credits_insufficient` and `test_live_pipeline_fails_closed_when_credits_check_fails`.
+
+3. **Screen privacy on demo script (`src/discovery/demo_citation.py`):**
+   - Removed stdout printing of internal log. The internal record is written strictly to `discovery_internal_audit.log` for policy consumption.
+   - Verified that screen output contains ONLY neutral display labels (`Supplier 1`, ...) and citations, with zero company names or metrics.
+
+4. **Document demo command:**
+   - Standard execution command is plain: `python demo_citations.py`.
+   - Updated `demo_citations.py` with dynamic `sys.path` insertion to guarantee robust execution across all environments.
+
+- All 32 unit tests passing:
+  `python -m unittest discover -s tests -p "crustdata*.py"`

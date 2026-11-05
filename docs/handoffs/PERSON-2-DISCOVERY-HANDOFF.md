@@ -92,7 +92,7 @@ All files are strictly within Person 2's ownership scope:
 | `src/discovery/service.py` | Pipeline orchestrator and Option C display/log formatters. |
 | `src/discovery/demo_citation.py` | Standalone citation verification runner for the demo. |
 | `demo_citations.py` | Repo-root shortcut to run the demo citation script. |
-| `tests/crustdata*.py` | 7 test files (28 tests total) covering all acceptance criteria. |
+| `tests/crustdata*.py` | 7 test files (32 tests total) covering all acceptance criteria and fail-closed error handling. |
 | `NOTES.md` | Living engineering notes documenting checks, architecture, and verification. |
 
 ---
@@ -104,14 +104,28 @@ Run all Person 2 tests with:
 ```powershell
 python -m unittest discover -s tests -p "crustdata*.py"
 ```
-**Result:** 28 tests ran, 0 failures, 0 errors in 0.011s.
+**Result:** 32 tests ran, 0 failures, 0 errors in 0.02s.
 
 ### Demo Citation Script Execution
-Run the demo citation script with:
+Run the demo citation script using plain `python demo_citations.py`:
 ```powershell
 python demo_citations.py
 ```
-**Result:** Returns 0; displays Option C compliant screen output with citations for every fact and zero leaked real names or values.
+**Result:** Returns 0; displays Option C compliant screen output with citations for every fact and zero leaked real names or values. Internal audit log is saved exclusively to `discovery_internal_audit.log` (never to screen/stdout).
+
+---
+
+## 5. Owner Feedback Addressed (Bratadeep's 4 Points)
+1. **Critical Errors Stop the Run (`src/discovery/verify.py` & `src/discovery/candidate_search.py`):**
+   - 402 (Credits exhausted), 403 (Plan gated), and 429 (Rate limit) re-raise immediately across identify, enrich, search, and autocomplete.
+   - Tested with `test_verify_all_stops_immediately_on_402_called_only_once` asserting `company_identify` is invoked exactly once when 402 is raised.
+2. **CreditGuard Pre-flight on Live Path (`src/discovery/service.py`):**
+   - Evaluates estimated spend, verifies credits via `check_account_credits(client)`, and enforces `CreditGuard` before any live network call.
+   - Fails closed (`CrustdataCreditsExhaustedError`) if credits are insufficient or balance check fails (`test_live_pipeline_fails_closed_when_credits_insufficient`).
+3. **Screen Privacy on Demo Runner (`src/discovery/demo_citation.py`):**
+   - Internal audit log removed from stdout; written strictly to disk file `discovery_internal_audit.log`. Video-facing stdout contains only neutral labels (`Supplier 1`, ...) and citations.
+4. **Document Demo Command:**
+   - Documented as plain `python demo_citations.py`. Added dynamic `sys.path` injection to `demo_citations.py` for resilience across environments.
 
 ---
 

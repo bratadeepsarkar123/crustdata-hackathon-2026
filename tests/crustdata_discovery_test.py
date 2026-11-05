@@ -4,7 +4,9 @@ import unittest
 from unittest.mock import MagicMock
 
 from src.crustdata.client import CrustdataClient
+from src.crustdata.exceptions import CrustdataCreditsExhaustedError
 from src.discovery.candidate_search import search_candidate_suppliers, resolve_industry_filter
+from src.discovery.service import run_discovery_pipeline
 
 
 class TestCrustdataDiscovery(unittest.TestCase):
@@ -97,6 +99,34 @@ class TestCrustdataDiscovery(unittest.TestCase):
         self.assertIsNone(second_call_kwargs["query"])
         self.assertEqual(len(candidates), 1)
         self.assertEqual(candidates[0]["name_internal"], "Fallback Co")
+
+    def test_live_pipeline_fails_closed_when_credits_insufficient(self):
+        """CreditGuard must fail closed if available credits are below estimated budget."""
+        mock_client = MagicMock(spec=CrustdataClient)
+        mock_client.allow_live = True
+        # Only 2.0 credits available, but estimated batch cost is > 10 credits
+        mock_client.get_account_credits.return_value = {"account": {"credits": 2.0}}
+
+        request = {"item": "pressure sensors", "region": "India"}
+        with self.assertRaises(CrustdataCreditsExhaustedError) as ctx:
+            run_discovery_pipeline(request=request, client=mock_client, use_fixtures=False)
+
+        self.assertIn("Crustdata credits insufficient", str(ctx.exception))
+        # Ensure fail-closed: NO company search calls were made!
+        mock_client.company_search.assert_not_called()
+
+    def test_live_pipeline_fails_closed_when_credits_check_fails(self):
+        """Pipeline must fail closed if credit balance cannot be verified."""
+        mock_client = MagicMock(spec=CrustdataClient)
+        mock_client.allow_live = True
+        mock_client.get_account_credits.side_effect = Exception("API connection dropped")
+
+        request = {"item": "pressure sensors", "region": "India"}
+        with self.assertRaises(CrustdataCreditsExhaustedError) as ctx:
+            run_discovery_pipeline(request=request, client=mock_client, use_fixtures=False)
+
+        self.assertIn("Credit pre-flight check failed", str(ctx.exception))
+        mock_client.company_search.assert_not_called()
 
 
 if __name__ == "__main__":

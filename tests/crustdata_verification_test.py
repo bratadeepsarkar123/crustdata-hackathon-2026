@@ -4,6 +4,11 @@ import unittest
 from unittest.mock import MagicMock
 
 from src.crustdata.client import CrustdataClient
+from src.crustdata.exceptions import (
+    CrustdataCreditsExhaustedError,
+    CrustdataPlanGatedError,
+    CrustdataRateLimitError,
+)
 from src.discovery.verify import verify_supplier, verify_all_candidates
 
 
@@ -91,6 +96,43 @@ class TestCrustdataVerification(unittest.TestCase):
         self.assertEqual(verified["headcount_total_internal"], 210)
         self.assertEqual(verified["headquarters_internal"], "New Delhi, India")
         self.assertEqual(verified["product_line_status"], "CONFIRMED")
+
+    def test_verify_all_stops_immediately_on_402_called_only_once(self):
+        """A 402 error must re-raise immediately, terminating the loop after 1 identify call."""
+        mock_client = MagicMock(spec=CrustdataClient)
+        mock_client.allow_live = True
+        mock_client.company_identify.side_effect = CrustdataCreditsExhaustedError("HTTP 402: Credits exhausted")
+
+        candidates = [
+            {"name_internal": "Candidate 1", "primary_domain": "cand1.com"},
+            {"name_internal": "Candidate 2", "primary_domain": "cand2.com"},
+            {"name_internal": "Candidate 3", "primary_domain": "cand3.com"},
+        ]
+
+        with self.assertRaises(CrustdataCreditsExhaustedError):
+            verify_all_candidates(candidates, client=mock_client, use_fixtures=False)
+
+        # Assert identify was called only ONCE and did NOT continue looping
+        self.assertEqual(mock_client.company_identify.call_count, 1)
+
+    def test_verify_all_stops_immediately_on_403(self):
+        """A 403 plan-gated error on enrich must stop the whole run immediately."""
+        mock_client = MagicMock(spec=CrustdataClient)
+        mock_client.allow_live = True
+        mock_client.company_identify.return_value = {"crustdata_company_id": 101}
+        mock_client.company_enrich.side_effect = CrustdataPlanGatedError("HTTP 403: Plan gated")
+
+        candidates = [
+            {"name_internal": "Candidate 1", "primary_domain": "cand1.com"},
+            {"name_internal": "Candidate 2", "primary_domain": "cand2.com"},
+        ]
+
+        with self.assertRaises(CrustdataPlanGatedError):
+            verify_all_candidates(candidates, client=mock_client, use_fixtures=False)
+
+        # First candidate identified, then enrich raised 403, candidate 2 was never processed
+        self.assertEqual(mock_client.company_identify.call_count, 1)
+        self.assertEqual(mock_client.company_enrich.call_count, 1)
 
 
 if __name__ == "__main__":

@@ -6,6 +6,16 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from src.crustdata.client import CrustdataClient
+from src.crustdata.credits import (
+    CreditGuard,
+    calculate_batch_cost,
+    check_account_credits,
+    MAX_RUN_CREDIT_BUDGET,
+)
+from src.crustdata.exceptions import (
+    CrustdataBudgetExceededError,
+    CrustdataCreditsExhaustedError,
+)
 from .candidate_search import search_candidate_suppliers
 from .verify import verify_all_candidates
 from .dedupe import dedupe_candidates
@@ -28,6 +38,35 @@ def run_discovery_pipeline(
     Assigns neutral display labels ("Supplier 1", "Supplier 2", ...) per Option C.
     """
     logger.info("Starting supplier discovery for item: %s", request.get("item"))
+
+    # Live path guard: verify credit balance and enforce CreditGuard before any live call
+    if not use_fixtures and client and client.allow_live:
+        estimated_cost = calculate_batch_cost(
+            search_results_count=100,
+            identify_count=10,
+            enrich_count=5,
+            autocomplete_count=1 if industry_filter else 0,
+        )
+        logger.info("Projected live discovery cost: %.2f credits", estimated_cost)
+
+        try:
+            available_credits = check_account_credits(client)
+            logger.info("Available Crustdata credits: %.2f", available_credits)
+        except Exception as exc:
+            logger.error("Failed to check Crustdata account credits: %s. Failing closed.", exc)
+            raise CrustdataCreditsExhaustedError(
+                f"Credit pre-flight check failed: Unable to verify account credits ({exc}). "
+                "Failing closed before making any live calls."
+            ) from exc
+
+        if available_credits < estimated_cost:
+            raise CrustdataCreditsExhaustedError(
+                f"Crustdata credits insufficient: Available ({available_credits:.2f}) < "
+                f"Estimated run cost ({estimated_cost:.2f}). Failing closed."
+            )
+
+        guard = CreditGuard(max_budget=min(MAX_RUN_CREDIT_BUDGET, available_credits))
+        guard.estimate_and_check(estimated_cost)
 
     # Step 2: Search candidate suppliers
     raw_candidates = search_candidate_suppliers(
