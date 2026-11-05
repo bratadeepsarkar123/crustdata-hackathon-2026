@@ -1,0 +1,33 @@
+[
+  {
+    "display_label": "Supplier 1",
+    "unit_price": 42.0,
+    "quantity": 500,
+    "total_price": 21000.0,
+    "lead_time_days": 10,
+    "payment_terms": "Net 30",
+    "label": "SIMULATED",
+    "source": "SIMULATED_DATASET_STEP_5B",
+    "_internal": {
+      "claimed_headcount": 65,
+      "headcount_total_internal": 58,
+      "raw_vendor_name_internal": "Apex Sensor Systems Inc."
+    }
+  },
+  {
+    "display_label": "Supplier 2",
+    "unit_price": 55.0,
+    "quantity": 500,
+    "total_price": 27500.0,
+    "lead_time_days": 12,
+    "payment_terms": "Net 30",
+    "label": "SIMULATED",
+    "source": "SIMULATED_DATASET_STEP_5B",
+    "_internal": {
+      "claimed_headcount": 30,
+      "headcount_total_internal": 28,
+      "raw_vendor_name_internal": "Precision Transducers Ltd."
+    }
+  }
+]
+
