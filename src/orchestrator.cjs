@@ -209,6 +209,26 @@ async function runOfflineFixture({
   }
 
   if (!isRecord(writeResult) || !writeResult.vendor_record || !writeResult.purchase_order) {
+    // If running with the default demo state directory and stale fixture records caused a key conflict,
+    // clear the stale demo state and retry once.
+    if (!stateDirectory && writeResult && (writeResult.status === 'KEY_CONFLICT' || writeResult.vendor_status === 'KEY_CONFLICT' || (Array.isArray(writeResult.errors) && writeResult.errors.some((err) => typeof err === 'string' && err.includes('already reserved'))))) {
+      try {
+        fs.rmSync(safeStatePath, { recursive: true, force: true });
+        fs.mkdirSync(safeStatePath, { recursive: true });
+        writeResult = await writer.writeVendorAndPo({
+          request: parsedRequest,
+          supplier: fixture.suppliers.find((supplier) => supplier.display_label === fixture.chosen_supplier_label),
+          quote: chosenQuote,
+          quoteCurrency: chosenQuoteCurrency,
+          policyDecision: fixture.policy_decision,
+        });
+      } catch {
+        // fall through to reject
+      }
+    }
+  }
+
+  if (!isRecord(writeResult) || !writeResult.vendor_record || !writeResult.purchase_order) {
     reject('PO_WRITE_FAILED', 'The simulated writer did not return both vendor and PO records.');
   }
   const vendorRecord = screenRecord(writeResult.vendor_record, 'vendor');
