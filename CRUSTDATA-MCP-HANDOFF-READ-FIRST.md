@@ -25,7 +25,12 @@
 - **No outreach.** Your agents talk only to your own team and the organisers. Do not send real emails, messages, calls or bookings to people outside the team (`rules.md` section 3).
 - **Cite facts.** Every person, company, number and date the product shows must say where it came from. When a fact cannot be checked, say so instead of guessing (`rules.md` section 4).
 - **Label simulated actions.** Any simulated quote, booking or payment must be labelled simulated in the product, the demo and the README (`rules.md` section 7).
-- **Errors.** 401: re-copy the key. 402: out of credits, stop and check the balance. 403: this endpoint or field is not on the key's plan, so do not retry it. 429: wait for the `x-ratelimit-reset` header, then back off.
+- **Errors (definitions from the ContextCon 04 Builder Handbook, "When something fails", page 23-24):**
+  - **401:** your key is not reaching Crustdata. Copy the key again and send it as `authorization: Bearer YOUR_API_KEY`.
+  - **402:** your credits have run out, so a retry will not help. Check the balance with `GET /account/credits` (free), then find the Crustdata team.
+  - **403:** this key is not allowed to call that endpoint (or, for MCP, that field). Check the Endpoints page in the dashboard, then find the Crustdata team. Do not retry it.
+  - **429:** you are over the limit for that endpoint. Wait a few seconds, retry with a backoff, and read the `x-ratelimit-reset` header for how long to wait.
+  - **Who to ask:** the Crustdata team on the floor. The Forward Deployed Engineer is Ainesh. The handbook says to find any Crustdata team member for Crustdata APIs and the MCP server.
 - **Robustness.** The judging criteria say the product must never send or pay twice after a crash or retry (`rules.md` section 4). Before re-running any paid step, check whether it already ran (for example, with the stored `upstream_request_id` or a watch's run history).
 
 ---
@@ -155,7 +160,7 @@ These are entitlements. Reshaping a request does not change them.
 - Company and jobs: `company_search_live`, `job_search_live`.
 - Social: `social_post_search_live`, `social_post_list_live`.
 - Developer and reviews: `dev_platform_enrich`, `employee_review_enrich`.
-- Batch (all 403): `batch_company_enrich`, `batch_person_enrich`, `batch_person_contact_enrich`, `batch_person_identify`, `batch_person_enrich_live`, `batch_person_search`, `batch_company_search`, `batch_job_search`, `batch_person_verify` (10 credits per verdict, if enabled).
+- Batch (all 403): `batch_company_enrich`, `batch_person_enrich`, `batch_person_contact_enrich`, `batch_person_identify`, `batch_person_enrich_live`, `batch_person_search`, `batch_company_search`, `batch_job_search`, `batch_person_verify`.
 - Batch, not confirmed: `batch_social_post_list_live`, `batch_company_search_live`, `batch_person_search_live`. Each returned a 400 for a validation error before the plan check, so their 403 status is not confirmed. The plan list says disabled.
 
 **Plan-gated response fields** (naming one in `fields` fails the whole call with 403; a gated field inside a requested group comes back empty with no error):
