@@ -146,10 +146,11 @@ python demo_citations.py --live
   - Screen output displays ONLY neutral labels (`Supplier 1` to `Supplier 5`) and citations.
   - Zero company names, domain URLs, or private metrics appear on screen or stdout.
   - Confidential identifiers logged to `discovery_internal_audit.log` (git-ignored).
-- **Shortlist Schema & Dynamic Units**:
-  - `--shortlist-json` supports dynamic units (e.g. `quantity_kg` when `--unit kg` is supplied; `quantity_pcs` for standard pieces).
+- **Shortlist Schema Parity & Strict Units**:
+  - `--shortlist-json` enforces strict schema parity with `samples/one-item/supplier-shortlist.json` (`quantity_pcs`).
+  - Non-pcs units (e.g. `--unit kg`) fail closed with a clean error message and non-zero exit code, protecting the desk contract.
   - Shortlist claim citations dynamically reflect actual obtained sources (`company enrich: description` if enriched, `company identify` if identified only, `unverified` if failed).
 - **Test Suite (57 Tests Passing)**:
-  - 15 unit tests in `tests/crustdata_one_item_test.py` covering one-item pipeline, Option C compliance, CLI invocation, shortlist JSON bridging, dynamic unit handling, actual source citations, and strict absence assertions for private company attributes (names, locations, headcounts, founding years).
+  - 15 unit tests in `tests/crustdata_one_item_test.py` covering one-item pipeline, Option C compliance, CLI invocation, shortlist JSON bridging, non-pcs unit rejection (`test_shortlist_payload_rejects_non_pcs_unit`, `test_cli_shortlist_json_rejects_non_pcs_unit`), actual source citations, and strict absence assertions for private company attributes (names, locations, headcounts, founding years).
   - Total Python suite: 57 tests passing (`python -m unittest discover -s tests -p "crustdata*.py"`).
   - Total Node suite: 32 tests passing (`node --test ...`).

@@ -92,17 +92,15 @@ def to_shortlist_payload(
 
     Bridges Discovery output (Person 2) with the desk's one-item shortlist schema.
     Carries run mode and a SIMULATED marker when run offline.
-    Uses the requested unit for quantity (e.g. quantity_pcs, quantity_kg).
+    Rejects any unit other than 'pcs' / 'pieces' for this format.
     """
-    raw_unit = str(request.get("unit", "pcs")).strip()
-    unit_norm = raw_unit.lower()
-    if unit_norm in {"pieces", "piece", "pc", "pcs"}:
-        qty_key = "quantity_pcs"
-    elif unit_norm:
-        sanitized = "".join(c if c.isalnum() else "_" for c in unit_norm).strip("_")
-        qty_key = f"quantity_{sanitized}" if sanitized else "quantity"
-    else:
-        qty_key = "quantity_pcs"
+    unit = str(request.get("unit", "")).strip().lower()
+    allowed_pcs_units = {"pcs", "pieces", "piece", "pc"}
+    if unit not in allowed_pcs_units:
+        raise ValueError(
+            f"Unsupported unit '{request.get('unit')}' for shortlist JSON: schema strictly requires quantity in 'pcs'. "
+            "Please request items with unit 'pcs' or 'pieces'."
+        )
 
     spec_thickness = extract_thickness_mm(request)
 
@@ -155,9 +153,8 @@ def to_shortlist_payload(
         "item": {
             "name": request.get("item", "neodymium speaker magnet"),
             "thickness_mm": spec_thickness,
-            qty_key: request.get("quantity", 1000),
+            "quantity_pcs": request.get("quantity", 1000),
             "buyer_location": request.get("buyer_location", "US"),
-            **({"unit": raw_unit} if unit_norm not in {"pieces", "piece", "pc", "pcs"} else {}),
         },
         "constraints": {
             "supplier_country": request.get("region", "China"),
