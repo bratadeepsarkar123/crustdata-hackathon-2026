@@ -24,7 +24,7 @@
       "label": "Supplier 2",
       "claims": [
         {
-          "text": "Small permanent magnet maker including neodymium; describes an export business",
+          "text": "Permanent magnet maker including neodymium; describes an export business",
           "citation": "company enrich: description"
         }
       ]
@@ -58,8 +58,8 @@
     }
   ],
   "recommended_label": "Supplier 1",
-  "reason": "Description states sintered neodymium permanent magnets, custom production with fast delivery, and a quality system. It matches the China supplier constraint. (company enrich: description)",
-  "top_risk": "MOQ not verified. The company also describes very large volume capacity, so very small orders may get low priority. All claims are self-reported. (company enrich: description)",
+  "reason": "Description states sintered neodymium permanent magnets, custom production with fast delivery, and a quality system. (company enrich: description)",
+  "top_risk": "MOQ not verified. Very small orders may get low priority. All claims are self-reported. (company enrich: description)",
   "moq_evidence": "Three web searches (Suppliers 1, 2, 3) returned no MOQ figures. No MOQ number is stated or assumed. (web search)",
   "unverified": [
     "MOQ for a 3 mm thick speaker magnet",

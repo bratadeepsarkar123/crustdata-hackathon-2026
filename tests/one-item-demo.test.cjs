@@ -21,7 +21,7 @@ test('sample JSON has five suppliers and Supplier 1 recommended', () => {
 });
 
 test('no company location, headcount or founding-year values on screen (README rule)', () => {
-  for (const s of ['founded', 'staff', 'headquarters', 'HQ', 'Shandong', 'employee', 'employee_count', '201-500', '5001', 'year_founded', 'locations.']) {
+  for (const s of ['founded', 'staff', 'headquarters', 'HQ', 'Shandong', 'employee', 'employee_count', '201-500', '5001', 'year_founded', 'locations.', 'Small', 'Large', 'very large']) {
     assert.ok(!text.includes(s), s);
   }
 });
