@@ -19,7 +19,9 @@ const LIVE_SOURCE = '[LIVE Crustdata POST /company/search; self-reported]';
 const MAX_DESCRIPTION_CHARS = 200;
 
 // Phrases that would break the display rule. A description containing any of these is withheld.
-const WITHHOLD_PATTERN = /headquarter|located in|based in|employee|staff|headcount|founded|established|\bfounded\b|\b\d{2,}\s*(people|workers)\b|\bhttps?:|www\.|\.com\b|\.in\b|@/i;
+// Covers names of places (words such as city, province, country), founding years and phrases like
+// "since 1995" or "20 years", size words (employees, staff, workers, capacity, tons) and links.
+const WITHHOLD_PATTERN = /headquarter|head office|located|based in|\bcity\b|province|\bstate\b|\bcountry\b|\bregion\b|employee|staff|headcount|workers|founded|establish|\bsince\b|\byears?\b|\b(19|20)\d{2}\b|\bcapacity\b|\btons?\b|\bhttps?:|www\.|\.com\b|\.in\b|@/i;
 
 function parseArgs(argv) {
   const out = { query: DEFAULT_QUERY, limit: DEFAULT_LIMIT, help: false };
@@ -56,18 +58,26 @@ function buildRequest({ query, limit, apiKey }) {
   };
 }
 
-// Returns a display-safe description string, or null when there is nothing safe to show.
+// Self-reference ("we", "our", "the company") is dropped too, since it points at the company.
+const SELF_REFERENCE_PATTERN = /\b(we|our|us|the company|this company)\b/i;
+
+// Keeps only the sentences that carry no name, place, year, size word, link or self-reference.
+// Returns a display-safe string, or null when there is no description at all.
+// If no sentence survives, the whole description is withheld.
 function safeDescription(company) {
   const bi = company && typeof company.basic_info === 'object' && company.basic_info ? company.basic_info : company || {};
   const raw = typeof bi.description === 'string' ? bi.description.trim() : '';
   if (!raw) return null;
-  if (WITHHOLD_PATTERN.test(raw)) return 'description withheld (contains a name, link, location or size detail)';
-  // Also withhold if the description repeats the company name anywhere.
-  const name = typeof bi.name === 'string' ? bi.name.trim() : '';
-  if (name && name.length > 2 && raw.toLowerCase().includes(name.toLowerCase())) {
-    return 'description withheld (contains the company name)';
-  }
-  return raw.length > MAX_DESCRIPTION_CHARS ? `${raw.slice(0, MAX_DESCRIPTION_CHARS)}...` : raw;
+  const name = typeof bi.name === 'string' ? bi.name.trim().toLowerCase() : '';
+  const sentences = raw.split(/(?<=[.!?。])\s+/).map((s) => s.trim()).filter(Boolean);
+  const kept = sentences.filter((s) => {
+    if (WITHHOLD_PATTERN.test(s) || SELF_REFERENCE_PATTERN.test(s)) return false;
+    if (name.length > 2 && s.toLowerCase().includes(name)) return false;
+    return true;
+  });
+  if (kept.length === 0) return 'description withheld (no sentence free of name, location, size or link)';
+  const text = kept.join(' ');
+  return text.length > MAX_DESCRIPTION_CHARS ? `${text.slice(0, MAX_DESCRIPTION_CHARS)}...` : text;
 }
 
 function render(json, { query }) {

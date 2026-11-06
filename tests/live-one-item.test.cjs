@@ -73,7 +73,7 @@ test('safe description is shown, unsafe ones are withheld, missing ones are repo
   const { text, count } = render(SAMPLE, { query: 'magnet maker' });
   assert.strictEqual(count, 3);
   assert.ok(text.includes('Supplier 1: Sintered NdFeB magnet maker offering custom shapes'));
-  assert.ok(text.includes('Supplier 2: description withheld (contains a name, link, location or size detail)'));
+  assert.ok(text.includes('Supplier 2: description withheld (no sentence free of name, location, size or link)'));
   assert.ok(text.includes('Supplier 3: no self-reported description returned'));
 });
 
@@ -87,7 +87,7 @@ test('every citation line carries the LIVE self-reported label, and no simulated
 
 test('description that repeats the company name is withheld even without other patterns', () => {
   const s = safeDescription({ basic_info: { name: 'Delta Magnets', description: 'Delta Magnets makes sintered magnets.' } });
-  assert.strictEqual(s, 'description withheld (contains the company name)');
+  assert.ok(s.startsWith('description withheld'), s);
 });
 
 test('long descriptions are truncated', () => {
@@ -150,4 +150,34 @@ test('bad arguments exit 2', async () => {
   assert.strictEqual(code, 2);
   assert.ok(io.err.join('\n').includes('--limit must be'));
   assert.throws(() => parseArgs(['--bogus']), /Unknown option/);
+});
+
+test('live-shaped descriptions with a founding year, place, size or name are withheld', () => {
+  const cases = [
+    'Since 1995, a manufacturer of sintered neodymium magnets with annual production capacity 1000 tons.',
+    'Our state-of-the-art headquarters and industrial park are located in Guangdong, China.',
+    'Headquartered in Ningde City, Fujian province, we design sintered neodymium magnets.',
+    'We are a group of people fascinated by magnets. We have served customers for over 20 years.',
+    'Ningbo Leyuan Magnets makes sintered magnets with ISO certificates.',
+  ];
+  for (const d of cases) {
+    const out = safeDescription({ basic_info: { name: 'Leyuan Magnets', description: d } });
+    assert.ok(out.startsWith('description withheld'), `should withhold: ${d} -> ${out}`);
+  }
+});
+
+test('a plain product description with no name, place or year is still shown', () => {
+  const d = 'Sintered NdFeB magnet maker offering custom shapes and coatings for motors and sensors.';
+  assert.strictEqual(safeDescription({ basic_info: { name: 'Acme Magnetics', description: d } }), d);
+});
+
+test("sentence-level filter keeps only the product sentence from a live description", () => {
+  const d = "Since 1995, Ningbo Leyuan Magnets has been a manufacturer of sintered neodymium magnets, certified by ISO9000:2001. the company has annual production capacity 1000 tons of rare earth magnets. They are producing customized Neodymium Magnets, Magnetic separations (magnetic tubes and magnetic grids) and magnetic couplings.";
+  const out = safeDescription({ basic_info: { name: "Leyuan Magnets", description: d } });
+  assert.strictEqual(out, "They are producing customized Neodymium Magnets, Magnetic separations (magnetic tubes and magnetic grids) and magnetic couplings.");
+});
+
+test("self-reference sentences are dropped even when they carry no other detail", () => {
+  const d = "We make sintered NdFeB magnets for motors. Our lines run round the clock.";
+  assert.strictEqual(safeDescription({ basic_info: { name: "Acme", description: d } }), "description withheld (no sentence free of name, location, size or link)");
 });
