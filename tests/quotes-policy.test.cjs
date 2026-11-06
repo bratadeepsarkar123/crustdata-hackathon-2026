@@ -5,9 +5,18 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
-const { buildSimulatedQuote, buildOneItemQuote, ONE_ITEM_QUOTE } = require('../src/quotes/quote.cjs');
+const {
+  buildSimulatedQuote,
+  buildOneItemQuote,
+  ONE_ITEM_QUOTE,
+  rankQuotes,
+} = require('../src/quotes/quote.cjs');
 const { validateQuote } = require('../src/contracts/index.cjs');
-const { checkPolicy, evaluatePolicyDecision } = require('../src/policy/policy.cjs');
+const {
+  checkPolicy,
+  evaluatePolicyDecision,
+  evaluateQuotesPolicy,
+} = require('../src/policy/policy.cjs');
 const { createPurchaseOrderWriter } = require('../src/po/writer.cjs');
 const fullFlowFixture = require('../samples/full-flow.cjs');
 
@@ -113,7 +122,16 @@ test('one-item policy evaluation handles approve, hold (MOQ not verified), and r
   };
   const quote = buildOneItemQuote(); // unit_price: 1.25, total: 1250, lead_time: 7
 
-  // 1. Hold on unverified MOQ
+  // P1: When options is omitted, it MUST return HOLD (not APPROVE)
+  const defaultOptionsDecision = evaluatePolicyDecision({
+    request,
+    quote,
+  });
+  assert.equal(defaultOptionsDecision.status, 'HOLD');
+  assert.equal(defaultOptionsDecision.approved, false);
+  assert.equal(defaultOptionsDecision.reason, 'HOLD: MOQ not verified');
+
+  // 1. Explicit Hold on unverified MOQ
   const holdDecision = evaluatePolicyDecision({
     request,
     quote,
@@ -125,7 +143,7 @@ test('one-item policy evaluation handles approve, hold (MOQ not verified), and r
   assert.equal(holdDecision.reason, 'HOLD: MOQ not verified');
   assert.equal(holdDecision.label, 'SIMULATED');
 
-  // 2. Approve when compliant and MOQ is confirmed
+  // 2. Approve when compliant AND MOQ is explicitly confirmed
   const approveDecision = evaluatePolicyDecision({
     request,
     quote,
@@ -136,7 +154,7 @@ test('one-item policy evaluation handles approve, hold (MOQ not verified), and r
   assert.equal(approveDecision.display_label, 'Supplier 1');
   assert.match(approveDecision.reason, /within budget/);
 
-  // 3. Reject when over budget
+  // 3. Reject when over budget even if MOQ is confirmed
   const rejectDecision = evaluatePolicyDecision({
     request: { ...request, budget: 1000 }, // 1250 > 1000
     quote,
@@ -145,4 +163,75 @@ test('one-item policy evaluation handles approve, hold (MOQ not verified), and r
   assert.equal(rejectDecision.status, 'REJECT');
   assert.equal(rejectDecision.approved, false);
   assert.match(rejectDecision.reason, /over the budget/);
+});
+
+test('rankQuotes validates every quote and rejects bad labels or private fields', () => {
+  const validQuotes = [
+    { display_label: 'Supplier 2', unit_price: 2.0, lead_time_days: 10, label: 'SIMULATED' },
+    { display_label: 'Supplier 1', unit_price: 1.25, lead_time_days: 7, label: 'SIMULATED' },
+  ];
+
+  const ranked = rankQuotes(validQuotes, { quantity: 1000 });
+  assert.equal(ranked.length, 2);
+  assert.equal(ranked[0].display_label, 'Supplier 1');
+  assert.equal(ranked[1].display_label, 'Supplier 2');
+
+  // Reject bad display label
+  assert.throws(
+    () => rankQuotes([{ display_label: 'Bad Vendor Name', unit_price: 1.0, lead_time_days: 5, label: 'SIMULATED' }]),
+    /Invalid quote in rankQuotes/
+  );
+
+  // Reject quote containing private fields
+  assert.throws(
+    () => rankQuotes([{
+      display_label: 'Supplier 1',
+      unit_price: 1.0,
+      lead_time_days: 5,
+      label: 'SIMULATED',
+      name_internal: 'Confidential Corp',
+    }]),
+    /Invalid quote in rankQuotes/
+  );
+});
+
+test('evaluateQuotesPolicy validates quotes and never leaks private fields', () => {
+  const request = {
+    item: 'sensor',
+    quantity: 100,
+    budget: 5000,
+    currency: 'USD',
+    deadline_days: 14,
+    region: 'US',
+    missing_fields: [],
+  };
+
+  // Rejects quote with private field
+  assert.throws(
+    () => evaluateQuotesPolicy({
+      request,
+      quotes: [{
+        display_label: 'Supplier 1',
+        unit_price: 10,
+        lead_time_days: 5,
+        label: 'SIMULATED',
+        raw_company_name: 'Secret Supplier LLC',
+      }],
+    }),
+    /Invalid quote in evaluateQuotesPolicy/
+  );
+
+  // Compliant quote result contains only contract keys
+  const result = evaluateQuotesPolicy({
+    request,
+    quotes: [
+      { display_label: 'Supplier 1', unit_price: 10, lead_time_days: 5, label: 'SIMULATED' },
+    ],
+  });
+
+  assert.equal(result.approved_candidates.length, 1);
+  const candidate = result.approved_candidates[0];
+  assert.deepEqual(Object.keys(candidate.quote), ['display_label', 'unit_price', 'lead_time_days', 'label']);
+  assert.equal(candidate.quote.name_internal, undefined);
+  assert.equal(candidate.quote.raw_company_name, undefined);
 });

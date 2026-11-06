@@ -2,6 +2,8 @@
 
 // Policy check: total within budget and lead time within the delivery deadline.
 // Returns the same shape as the fixture policy_decision (label, approved, display_label, reason).
+const { validateQuote } = require('../contracts/index.cjs');
+
 function checkPolicy({ request, quote }) {
   const reasons = [];
   const missing = Array.isArray(request.missing_fields) ? request.missing_fields : [];
@@ -34,17 +36,20 @@ function checkPolicy({ request, quote }) {
 
 /**
  * Task 3: Evaluate quote with granular status: approve, hold, or reject.
- * Includes explicit rule that flags "MOQ not verified" as a hold.
+ * P1 rule: evaluatePolicyDecision must return HOLD unless the supplier quantity
+ * is explicitly confirmed (e.g. options.moq_verified === true or options.quantity_confirmed === true).
  */
 function evaluatePolicyDecision({ request, quote, supplier, options = {} }) {
-  // Check for hold conditions (e.g. MOQ not verified)
-  const isMoqUnverified =
-    options.moq_verified === false ||
-    options.moq_status === 'UNVERIFIED' ||
-    Boolean(quote && quote.moq_verified === false) ||
-    Boolean(supplier && supplier.product_line_status === 'HUMAN_OR_SIMULATED');
+  const quoteCheck = validateQuote(quote);
+  if (!quoteCheck.valid) {
+    throw new Error(`Invalid quote provided to policy evaluation: ${quoteCheck.errors.join('; ')}`);
+  }
 
-  if (isMoqUnverified) {
+  // P1 requirement: Must return HOLD unless supplier quantity is explicitly confirmed
+  const isExplicitlyConfirmed =
+    options && (options.moq_verified === true || options.quantity_confirmed === true);
+
+  if (!isExplicitlyConfirmed) {
     return Object.freeze({
       label: 'SIMULATED',
       status: 'HOLD',
@@ -77,6 +82,7 @@ function evaluatePolicyDecision({ request, quote, supplier, options = {} }) {
 
 /**
  * Compare all candidate quotes against request policy.
+ * Validates each quote with validateQuote to reject invalid labels or private fields.
  * Compliant quotes are ranked. Non-compliant quotes (over budget, lead time exceeded, etc.)
  * are routed directly to the exceptions queue with the detailed failure reason.
  */
@@ -89,22 +95,41 @@ function evaluateQuotesPolicy({ request, quotes }) {
   const exceptionsQueue = [];
 
   for (const quote of quotes) {
+    const check = validateQuote(quote);
+    if (!check.valid) {
+      throw new Error(`Invalid quote in evaluateQuotesPolicy: ${check.errors.join('; ')}`);
+    }
+
     const decision = checkPolicy({ request, quote });
     if (decision.approved) {
-      approvedCandidates.push({
-        display_label: quote.display_label,
-        quote,
-        decision,
-        total: quote.unit_price * request.quantity,
-        label: 'SIMULATED',
-      });
+      approvedCandidates.push(
+        Object.freeze({
+          display_label: quote.display_label,
+          quote: Object.freeze({
+            display_label: quote.display_label,
+            unit_price: quote.unit_price,
+            lead_time_days: quote.lead_time_days,
+            label: quote.label,
+          }),
+          decision,
+          total: quote.unit_price * request.quantity,
+          label: 'SIMULATED',
+        })
+      );
     } else {
-      exceptionsQueue.push({
-        display_label: quote.display_label,
-        quote,
-        reason: decision.reason,
-        label: 'SIMULATED',
-      });
+      exceptionsQueue.push(
+        Object.freeze({
+          display_label: quote.display_label,
+          quote: Object.freeze({
+            display_label: quote.display_label,
+            unit_price: quote.unit_price,
+            lead_time_days: quote.lead_time_days,
+            label: quote.label,
+          }),
+          reason: decision.reason,
+          label: 'SIMULATED',
+        })
+      );
     }
   }
 

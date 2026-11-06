@@ -2,7 +2,7 @@
 
 **ContextCon 04 Hackathon**  
 **Role:** Person 3 (`debugat2am`) — Quotes, Policy, PO Retries  
-**Scope:** Steps 5a, 5b, 6, and PO retry / idempotency guard coordination (Step 7).
+**Scope:** Steps 5b, 6, and PO retry / idempotency guard coordination (Step 7).
 
 ---
 
@@ -11,8 +11,8 @@
 ```mermaid
 flowchart TD
     subgraph Step1_4["Upstream Pipeline (Person 1 & Person 2)"]
-        Req["Step 1: Purchase Request Intake<br/><i>(500 Sensors, $25k Budget, 14d Delivery)</i><br/><b>[REAL]</b>"] --> CD["Steps 2-4: Crustdata Discovery & Verification<br/><i>(Search, Identify, Enrich Headcount/Location)</i><br/><b>[REAL]</b>"]
-        CD --> VSupp["Verified Candidate Suppliers<br/><i>(Display Labels: Supplier 1, Supplier 2)</i><br/><b>[REAL]</b>"]
+        Req["Step 1: Purchase Request Intake<br/><i>(500 Sensors, $25k Budget, 14d Delivery)</i><br/><b>[SIMULATED FIXTURE / PARSER]</b>"] --> CD["Steps 2-4: Crustdata Discovery & Verification<br/><i>(Search, Identify, Enrich Headcount/Location)</i><br/><b>[SIMULATED FIXTURE / PLANNED LIVE]</b>"]
+        CD --> VSupp["Candidate Suppliers<br/><i>(Display Labels: Supplier 1, Supplier 2)</i><br/><b>[SIMULATED FIXTURE]</b>"]
     end
 
     subgraph Step5["Step 5: Quote Collection (Person 3)"]
@@ -23,17 +23,19 @@ flowchart TD
     end
 
     subgraph Step6["Step 6: Policy Comparison & Budget Check (Person 3)"]
-        Q1 --> PolEval["Policy Evaluator<br/><i>(Budget <= $25,000, Delivery <= 14d)</i><br/><b>[REAL LOGIC on SIMULATED DATA]</b>"]
+        Q1 --> PolEval["Policy Evaluator<br/><i>(Budget <= $25,000, Delivery <= 14d, MOQ Check)</i><br/><b>[SIMULATED LOGIC]</b>"]
         Q2 --> PolEval
         
-        PolEval -- "Total $21,000 <= $25,000 (Compliant)" --> Rank["Rank 1: Supplier 1<br/>Approved for Award<br/><b>[APPROVED]</b>"]
-        PolEval -- "Total $27,500 > $25,000 (Over Budget)" --> ExcQueue["Exceptions Queue:<br/>Supplier 2 Routed with Reason:<br/>'total 27500 is over the budget of 25000'<br/><b>[HUMAN-IN-THE-LOOP EXCEPTION]</b>"]
+        PolEval -- "Total $21,000 <= $25,000 (Compliant & Confirmed)" --> Rank["Rank 1: Supplier 1<br/>Approved for Award<br/><b>[SIMULATED APPROVED]</b>"]
+        PolEval -- "Total $27,500 > $25,000 (Over Budget)" --> ExcQueue["Exceptions Queue:<br/>Supplier 2 Routed with Reason:<br/>'total 27500 is over the budget of 25000'<br/><b>[SIMULATED EXCEPTION]</b>"]
+        PolEval -- "MOQ Unverified" --> HoldQueue["Hold Queue:<br/>'HOLD: MOQ not verified'<br/><b>[SIMULATED HOLD]</b>"]
     end
 
     subgraph Step7["Step 7: PO Creation & Retries (Person 1 + Person 3 Guard)"]
         Rank --> IdempGuard{"Idempotency Store Check<br/><i>(Key: po_writer intent)</i>"}
         IdempGuard -- "Key Not Seen" --> CreatePO["Call Person 1 PO Writer<br/>Atomically write immutable PO<br/><b>[SIMULATED PO]</b>"]
-        IdempGuard -- "Key Already Succeeded" --> CachedPO["Return Existing Record<br/><i>(Zero Duplicate PO Creation)</i><br/><b>[IDEMPOTENT REPLAY]</b>"]
+        IdempGuard -- "Key Already Succeeded" --> CachedPO["Return Existing Record<br/><i>(Zero Duplicate PO Creation)</i><br/><b>[SIMULATED IDEMPOTENT REPLAY]</b>"]
+        IdempGuard -- "Payload Conflict" --> ConflictPO["Return Conflict Record<br/><i>(KEY_CONFLICT)</i><br/><b>[SIMULATED CONFLICT]</b>"]
     end
 ```
 
@@ -55,8 +57,8 @@ sequenceDiagram
 
     Note over Orch, PE: Step 6 Policy Evaluation
     Orch->>PE: evaluateQuotesPolicy(request, quotes)
-    PE-->>Orch: Supplier 1 -> Approved (Rank 1, Total $21,000 <= $25,000)
-    PE-->>Orch: Supplier 2 -> Exceptions Queue (Over Budget: $27,500 > $25,000)
+    PE-->>Orch: Supplier 1 -> Approved (Rank 1, Total $21,000 <= $25,000) [SIMULATED]
+    PE-->>Orch: Supplier 2 -> Exceptions Queue (Over Budget: $27,500 > $25,000) [SIMULATED]
 
     Note over Orch, PO: Step 7 Idempotent PO Creation
     Orch->>PO: writeVendorAndPo(inputs)
@@ -64,8 +66,13 @@ sequenceDiagram
 
     Note over Orch, PO: Accidental Duplicate PO Request on Retry
     Orch->>PO: writeVendorAndPo(inputs)
-    Note over PO: Key exists in idempotency store. Action not re-executed!
+    Note over PO: Key exists in idempotency store with matching payload.
     PO-->>Orch: Cached PO-2026-0001 (status: EXISTS) [SIMULATED]
+
+    Note over Orch, PO: Duplicate Key with Modified Payload
+    Orch->>PO: writeVendorAndPo(conflictInputs)
+    Note over PO: Key exists with different payload hash.
+    PO-->>Orch: Rejection (status: KEY_CONFLICT) [SIMULATED]
 ```
 
 ---
@@ -73,4 +80,5 @@ sequenceDiagram
 ## 3. Strict Truthfulness & Simulation Disclaimers
 
 1. **Quotes:** All quotations, pricing (\$42 / \$55), and delivery timelines are deterministic synthetic fixtures from `data/simulated/supplier_quotes.json` and carry the mandatory `"label": "SIMULATED"`.
-2. **Purchase Orders:** All PO numbers (e.g. `PO-2026-XXXX`) and vendor onboarding records are synthetic demonstrations for ContextCon 04. No external ERP or cellular network was contacted.
+2. **Purchase Orders:** All PO numbers (e.g. `PO-2026-XXXX`) and vendor onboarding records are synthetic demonstrations for ContextCon 04. No external ERP or live network service was contacted.
+3. **Crustdata & WhatsApp:** All stages in this branch run strictly on offline simulated fixtures with zero live external network calls.

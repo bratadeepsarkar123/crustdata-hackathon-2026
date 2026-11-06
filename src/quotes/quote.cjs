@@ -51,6 +51,16 @@ function rankQuotes(quotes, request) {
   if (!Array.isArray(quotes)) {
     throw new TypeError('quotes must be an array');
   }
+
+  // P2 requirement: Strictly validate each quote with validateQuote before sorting
+  // This asserts neutral display labels ('Supplier N') and rejects any private/disallowed fields
+  for (const q of quotes) {
+    const check = validateQuote(q);
+    if (!check.valid) {
+      throw new Error(`Invalid quote in rankQuotes: ${check.errors.join('; ')}`);
+    }
+  }
+
   // Filter for display-safe simulated quotes and sort by price ascending then lead time ascending
   const sorted = [...quotes].sort((a, b) => {
     const totalA = a.unit_price * (request ? request.quantity || 1 : 1);
@@ -58,6 +68,7 @@ function rankQuotes(quotes, request) {
     if (totalA !== totalB) return totalA - totalB;
     return a.lead_time_days - b.lead_time_days;
   });
+
   return Object.freeze(
     sorted.map((q) =>
       Object.freeze({
