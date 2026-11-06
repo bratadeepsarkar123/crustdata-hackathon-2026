@@ -131,3 +131,21 @@ python demo_citations.py --live
   - 100% verified. Screen and JSON projections output only neutral labels (`Supplier 1` to `Supplier 5`) and citations (`Source: Crustdata` with endpoint and field).
   - Real names, domains, and metrics kept exclusively in `discovery_internal_audit.log` (git-ignored).
 - **Test Results**: All 34 Crustdata unit tests passing (`python -m unittest discover -s tests -p "crustdata*.py"`).
+
+---
+
+## 6. One-Item Discovery & Option C Runner (2026-11-06)
+- **Target Item**: Neodymium speaker magnet, 3 mm thick, 1000 pcs, US buyer, sole supplier in China, very small MOQ.
+- **Entrypoints**:
+  - `python src/discovery/option_c_run.py` (or `python option_c_run.py`)
+  - CLI supports: `--item`, `--quantity`, `--unit`, `--spec`, `--buyer-location`, `--supplier-region`, `--moq`, `--live`, `--shortlist-json`, `--internal-log-file`.
+- **Offline & Live Modes**:
+  - Offline default: Uses simulated fixtures in `src/discovery/fixtures.py` (5 China neodymium magnet suppliers).
+  - Live mode: Activated with `--live` flag; checks account credits pre-flight and queries live Crustdata API.
+- **Option C Compliance**:
+  - Screen output displays ONLY neutral labels (`Supplier 1` to `Supplier 5`) and citations.
+  - Zero company names, domain URLs, or private metrics appear on screen or stdout.
+  - Confidential identifiers logged to `discovery_internal_audit.log` (git-ignored).
+- **Test Suite (50 Tests Passing)**:
+  - 8 new unit tests in `tests/crustdata_one_item_test.py` covering one-item pipeline, Option C compliance, CLI invocation, shortlist JSON bridging, and mocked live failure/success modes.
+  - Total Python suite: 50 tests passing (`python -m unittest discover -s tests -p "crustdata*.py"`).
