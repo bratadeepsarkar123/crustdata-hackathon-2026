@@ -368,6 +368,24 @@ class TestOneItemDiscovery(unittest.TestCase):
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("Unsupported unit 'kg'", proc.stderr)
 
+    def test_cli_live_shortlist_json_rejects_non_pcs_unit_before_discovery(self):
+        """CLI --live --shortlist-json --unit kg validates pre-flight before initiating discovery or credit checks."""
+        cmd = [
+            sys.executable,
+            "src/discovery/option_c_run.py",
+            "--live",
+            "--quantity", "10",
+            "--unit", "kg",
+            "--shortlist-json",
+        ]
+        # Even without CRUSTDATA_API_KEY set, it should fail on unit pre-flight validation first, not missing API key
+        clean_env = os.environ.copy()
+        clean_env.pop("CRUSTDATA_API_KEY", None)
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False, env=clean_env)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("Unsupported unit 'kg'", proc.stderr)
+        self.assertNotIn("CRUSTDATA_API_KEY", proc.stderr)
+
     def test_shortlist_payload_cites_actual_sources(self):
         """to_shortlist_payload cites actual sources present on supplier; keeps failed verification explicit."""
         req = build_one_item_request()

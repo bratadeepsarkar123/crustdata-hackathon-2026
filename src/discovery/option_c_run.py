@@ -295,6 +295,31 @@ def main() -> int:
 
     args = parser.parse_args()
 
+    # Pre-flight validation before starting discovery to prevent wasting API credits on invalid shortlist exports
+    if args.shortlist_json:
+        unit = str(args.unit or "").strip().lower()
+        if unit not in {"pcs", "pieces", "piece", "pc"}:
+            print(
+                f"Option C export error: Unsupported unit '{args.unit}' for shortlist JSON: "
+                "schema strictly requires quantity in 'pcs'. Please request items with unit 'pcs' or 'pieces'.",
+                file=sys.stderr,
+            )
+            return 1
+        try:
+            req_pre = build_one_item_request(
+                item=args.item,
+                quantity=args.quantity,
+                unit=args.unit,
+                spec=args.spec,
+                buyer_location=args.buyer_location,
+                supplier_region=args.supplier_region,
+                moq=args.moq,
+            )
+            extract_thickness_mm(req_pre)
+        except ValueError as exc:
+            print(f"Option C export error: {exc}", file=sys.stderr)
+            return 1
+
     try:
         suppliers = run_one_item_discovery(
             item=args.item,
