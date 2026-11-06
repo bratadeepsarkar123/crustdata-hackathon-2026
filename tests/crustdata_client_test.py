@@ -1,6 +1,7 @@
 """Tests for Crustdata client: headers, 429 backoff, 402/403 stops, key masking."""
 
 import os
+import random
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -14,6 +15,7 @@ from src.crustdata.exceptions import (
     CrustdataRateLimitError,
 )
 from src.crustdata.credits import calculate_batch_cost, CreditGuard
+from src.discovery.service import run_discovery_pipeline
 
 
 class TestCrustdataClient(unittest.TestCase):
@@ -133,6 +135,71 @@ class TestCrustdataClient(unittest.TestCase):
         cost = calculate_batch_cost(search_results_count=20, identify_count=5, enrich_count=5, autocomplete_count=1)
         self.assertEqual(cost, 10.60)
         self.assertLess(cost, 200.0)
+
+    def test_credit_guard_has_no_run_cap_by_default(self):
+        guard = CreditGuard()
+        self.assertIsNone(guard.max_budget)
+        guard.estimate_and_check(5000.0)
+        guard.record_usage(4500.0, "large run")
+        guard.record_usage(900.0, "large run")
+        self.assertEqual(guard.total_credits_used, 5400.0)
+
+    def test_live_pipeline_above_200_credits_finishes_without_cap(self):
+        """Mocked live-pipeline test with balance > 203 credits and 100 identified candidates.
+
+        Verifies that when MAX_RUN_CREDIT_BUDGET is None, a run consuming 203 credits
+        (3.0 search + 200.0 enrich for 100 candidates) completes without hitting the
+        old 200-credit cap.
+        """
+        rng = random.Random(42)
+        chars = "abcdefghijklmnopqrstuvwxyz"
+        names = []
+        while len(names) < 100:
+            cand = "".join(rng.choices(chars, k=12))
+            if all(cand[:4] != ex[:4] and cand[-4:] != ex[-4:] for ex in names):
+                names.append(cand)
+
+        mock_client = MagicMock(spec=CrustdataClient)
+        mock_client.allow_live = True
+        # Account balance well above 203 credits
+        mock_client.get_account_credits.return_value = {"account": {"credits": 500.0}}
+
+        # 100 candidate suppliers returned by search with distinct names and domains
+        mock_client.company_search.return_value = {
+            "results": [
+                {
+                    "name": name,
+                    "domain": f"{name}.com",
+                    "year_founded": 2010,
+                    "location": "Bengaluru, India",
+                    "relevance_score": 0.95,
+                }
+                for name in names
+            ]
+        }
+
+        # Each candidate is identified with a unique ID
+        mock_client.company_identify.side_effect = [
+            {"crustdata_company_id": 1000 + i} for i in range(1, 101)
+        ]
+
+        # Each candidate is enriched
+        mock_client.company_enrich.return_value = {
+            "headcount": {"total": 50},
+            "locations": {"headquarters": "Bengaluru, India"},
+            "basic_info": {"description": "Manufacturer of industrial sensors"},
+        }
+
+        request = {"item": "temperature sensors", "region": "India"}
+        suppliers = run_discovery_pipeline(request=request, client=mock_client, use_fixtures=False)
+
+        # Assert search was called once with 100 candidates
+        mock_client.company_search.assert_called_once()
+        # Assert identify was called 100 times (free)
+        self.assertEqual(mock_client.company_identify.call_count, 100)
+        # Assert all 100 enrich calls finished (costs 200 credits, total 203 credits with search)
+        self.assertEqual(mock_client.company_enrich.call_count, 100)
+        self.assertEqual(len(suppliers), 100)
 
     def test_credit_guard_budget_under_200(self):
         guard = CreditGuard(max_budget=200.0)
