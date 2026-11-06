@@ -16,6 +16,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -69,8 +70,13 @@ def to_shortlist_payload(
     Bridges Discovery output (Person 2) with the desk's one-item shortlist schema.
     """
     spec_thickness = 3
-    if "3 mm" in request.get("spec", ""):
-        spec_thickness = 3
+    spec_str = str(request.get("spec", ""))
+    match = re.search(r"(\d+(?:\.\d+)?)\s*mm", spec_str, re.IGNORECASE)
+    if match:
+        val = match.group(1)
+        spec_thickness = float(val) if "." in val else int(val)
+    elif request.get("thickness_mm") is not None:
+        spec_thickness = request.get("thickness_mm")
 
     shortlist_suppliers = []
     for s in suppliers:

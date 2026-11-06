@@ -103,6 +103,20 @@ class TestOneItemDiscovery(unittest.TestCase):
                 screen_output.lower(),
                 f"Security violation: Domain '{domain_internal}' leaked to screen display!",
             )
+            # Check headquarters and headcount are not leaked
+            if hq_internal:
+                self.assertNotIn(
+                    hq_internal.lower(),
+                    screen_output.lower(),
+                    f"Security violation: Headquarters '{hq_internal}' leaked to screen display!",
+                )
+            if hc_internal and hc_internal != "None":
+                self.assertNotIn(
+                    hc_internal,
+                    screen_output,
+                    f"Security violation: Headcount '{hc_internal}' leaked to screen display!",
+                )
+
             # No raw domain URLs in screen output
             self.assertNotIn(".example", screen_output.lower())
             self.assertNotIn("http://", screen_output.lower())
@@ -208,6 +222,40 @@ class TestOneItemDiscovery(unittest.TestCase):
         mock_client.company_identify.assert_called_once()
         mock_client.company_enrich.assert_called_once()
 
+
+    def test_screen_display_rejects_private_sentinel_values(self):
+        """Feed synthetic supplier with unique sentinels for every private field and assert none appear in screen output."""
+        sentinel_supplier = {
+            "display_label": "Supplier 1",
+            "name_internal": "SECRET_CORP_SENTINEL_XYZ",
+            "primary_domain": "secret-domain-sentinel-xyz.example",
+            "year_founded": 1999,
+            "headquarters_internal": "SECRET_CITY_SENTINEL_XYZ",
+            "headcount_total_internal": 987654321,
+            "industry": "SECRET_INDUSTRY_SENTINEL_XYZ",
+            "product_line_status": "CONFIRMED",
+            "sources": [
+                {"field": "primary_domain", "endpoint": "POST /company/identify"},
+                {"field": "locations.headquarters", "endpoint": "POST /company/enrich"},
+            ],
+            "confidence": 0.95,
+        }
+        output = format_screen_display([sentinel_supplier])
+        self.assertNotIn("SECRET_CORP_SENTINEL_XYZ", output)
+        self.assertNotIn("secret-domain-sentinel-xyz.example", output)
+        self.assertNotIn("SECRET_CITY_SENTINEL_XYZ", output)
+        self.assertNotIn("987654321", output)
+        self.assertNotIn("SECRET_INDUSTRY_SENTINEL_XYZ", output)
+
+    def test_to_shortlist_payload_dynamic_thickness(self):
+        """to_shortlist_payload dynamically parses thickness from spec string."""
+        req = build_one_item_request(spec="5 mm thick, low MOQ")
+        payload = to_shortlist_payload([], req)
+        self.assertEqual(payload["item"]["thickness_mm"], 5)
+
+        req_dec = build_one_item_request(spec="2.5 mm precision magnet")
+        payload_dec = to_shortlist_payload([], req_dec)
+        self.assertEqual(payload_dec["item"]["thickness_mm"], 2.5)
 
 if __name__ == "__main__":
     unittest.main()
