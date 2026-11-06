@@ -350,23 +350,26 @@ class TestOneItemDiscovery(unittest.TestCase):
             for yr in forbidden_years:
                 self.assertNotIn(yr, text_out, f"Founding year '{yr}' leaked in {desc}!")
 
-    def test_shortlist_payload_rejects_non_pcs_unit(self):
-        """to_shortlist_payload strictly rejects units other than 'pcs' / 'pieces' (e.g. kg, liters)."""
+    def test_shortlist_payload_uses_given_unit_kg(self):
+        """to_shortlist_payload uses the given unit for quantity (e.g. quantity_kg for --unit kg)."""
         req = build_one_item_request(quantity=10, unit="kg")
-        with self.assertRaises(ValueError) as ctx:
-            to_shortlist_payload([], req)
-        self.assertIn("Unsupported unit 'kg'", str(ctx.exception))
+        payload = to_shortlist_payload([], req)
+        self.assertIn("quantity_kg", payload["item"])
+        self.assertEqual(payload["item"]["quantity_kg"], 10)
+        self.assertNotIn("quantity_pcs", payload["item"])
+        self.assertEqual(payload["item"].get("unit"), "kg")
 
-        req_meters = build_one_item_request(quantity=100, unit="meters")
-        with self.assertRaises(ValueError):
-            to_shortlist_payload([], req_meters)
-
-    def test_cli_shortlist_json_rejects_non_pcs_unit(self):
-        """CLI --shortlist-json fails with non-zero exit code when given a non-pcs unit (e.g. --unit kg)."""
+    def test_cli_shortlist_json_with_unit_kg(self):
+        """CLI --shortlist-json with --unit kg outputs quantity_kg and succeeds."""
         cmd = [sys.executable, "src/discovery/option_c_run.py", "--quantity", "10", "--unit", "kg", "--shortlist-json"]
         proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
-        self.assertNotEqual(proc.returncode, 0)
-        self.assertIn("Unsupported unit 'kg'", proc.stderr)
+        self.assertEqual(proc.returncode, 0, f"CLI exited with error: {proc.stderr}")
+        data = json.loads(proc.stdout)
+        self.assertIn("item", data)
+        self.assertIn("quantity_kg", data["item"])
+        self.assertEqual(data["item"]["quantity_kg"], 10)
+        self.assertNotIn("quantity_pcs", data["item"])
+        self.assertEqual(data["item"].get("unit"), "kg")
 
     def test_shortlist_payload_cites_actual_sources(self):
         """to_shortlist_payload cites actual sources present on supplier; keeps failed verification explicit."""
