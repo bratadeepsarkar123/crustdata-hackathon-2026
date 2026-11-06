@@ -1,6 +1,6 @@
 # ContextCon 04 (IIT Kanpur) — Team Rules
 
-Source: the official ContextCon 04 Builder Handbook (Thursday 5 to Friday 6 November 2026, DJAC 206, IIT Kanpur). If this file and the handbook ever disagree, the handbook wins. Check the WhatsApp group for updates.
+Source: the official ContextCon 04 Builder Handbook (Thursday 5 to Friday 6 November 2026, DJAC 206, IIT Kanpur). If this file and the handbook ever disagree, the handbook wins. Check the event group chat for updates.
 
 ## 1. Timing (IST)
 

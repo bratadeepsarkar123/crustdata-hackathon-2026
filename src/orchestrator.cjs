@@ -1,7 +1,7 @@
 'use strict';
 
 // This harness intentionally uses the intake parser and simulated PO writer
-// only. Discovery, verification, dedupe, WhatsApp, quotes, and policy are
+// only. Discovery, verification, dedupe, quotes, and policy are
 // represented by a prerecorded SIMULATED fixture; no network modules are used.
 const fs = require('node:fs');
 const os = require('node:os');

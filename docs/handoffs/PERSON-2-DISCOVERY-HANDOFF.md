@@ -1,7 +1,7 @@
 # ContextCon 04: Person 2 Handoff (Discovery & Crustdata)
 
 **To:** `@bratadeepsarkar123` (Person 1 / Integrator)  
-**Cc:** `@debugat2am` (Person 3 / Quotes & WhatsApp)  
+**Cc:** `@debugat2am` (Person 3 / Quotes & Policy)  
 **From:** `@AdityaChittora` (Person 2 / Discovery & Crustdata)  
 **Date:** 6 November 2026  
 **Branch:** `feat/issue-7-discovery`  

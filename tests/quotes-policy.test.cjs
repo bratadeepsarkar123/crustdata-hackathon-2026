@@ -7,7 +7,6 @@ const path = require('node:path');
 const test = require('node:test');
 const { buildSimulatedQuote } = require('../src/quotes/quote.cjs');
 const { checkPolicy } = require('../src/policy/policy.cjs');
-const { buildTeamPhoneMessage } = require('../src/whatsapp/team-phone.cjs');
 const { createPurchaseOrderWriter } = require('../src/po/writer.cjs');
 const fullFlowFixture = require('../samples/full-flow.cjs');
 
@@ -49,24 +48,6 @@ test('policy checks enforce budget and delivery deadline', () => {
   assert.equal(withinPolicy.approved, true);
   assert.equal(overBudget.approved, false);
   assert.equal(tooSlow.approved, false);
-});
-
-test('team phone messages reject unlisted numbers and mark allowed messages', () => {
-  const message = {
-    displayLabel: 'Supplier 1',
-    text: 'Quote is ready.',
-    idempotencyKey: 'quote-ready-1',
-    toNumber: '+15550000001',
-    teamPhones: ['+15550000002'],
-  };
-
-  assert.throws(() => buildTeamPhoneMessage(message));
-
-  const allowed = buildTeamPhoneMessage({
-    ...message,
-    toNumber: '+15550000002',
-  });
-  assert.equal(allowed.mode, 'TEAM_PHONE');
 });
 
 test('retries with the same inputs return the same purchase order number', async (t) => {

@@ -10,7 +10,7 @@ const DEFAULT_STATE_DIRECTORY = path.join(os.homedir(), '.contextcon-supplier-ag
 
 /*
  * This journal publishes simulated local filesystem records only. It does not
- * guarantee exactly-once delivery to an external WhatsApp/provider API; those
+ * guarantee exactly-once delivery to an external provider API; those
  * writes need provider idempotency or their own reconciliation path. On
  * Windows, file contents are flushed before publication, but directory fsync
  * is unavailable, so sudden power loss may lose directory-entry updates.

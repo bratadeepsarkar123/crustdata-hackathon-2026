@@ -11,9 +11,6 @@ const SUPPLIER_KEYS = Object.freeze([
   'headquarters_internal', 'headcount_total_internal', 'industry',
   'product_line_status', 'sources', 'confidence',
 ]);
-const WHATSAPP_MESSAGE_KEYS = Object.freeze([
-  'display_label', 'direction', 'text', 'idempotency_key', 'mode', 'label',
-]);
 const QUOTE_KEYS = Object.freeze(['display_label', 'unit_price', 'lead_time_days', 'label']);
 const VENDOR_RECORD_KEYS = Object.freeze([
   'idempotency_key', 'display_label', 'po_number', 'total', 'status', 'label',
@@ -125,20 +122,6 @@ function validateSupplier(supplier) {
   return result(errors);
 }
 
-/** Section 6 WhatsApp message validator. */
-function validateWhatsAppMessage(message) {
-  const errors = [];
-  if (!checkExactKeys(message, WHATSAPP_MESSAGE_KEYS, 'whatsapp_message', errors)) return result(errors);
-  if (!/^Supplier [1-9]\d*$/.test(message.display_label)) errors.push('whatsapp_message.display_label must be a neutral supplier label');
-  if (!['outbound', 'inbound'].includes(message.direction)) errors.push('whatsapp_message.direction must be outbound or inbound');
-  if (!isNonEmptyString(message.text)) errors.push('whatsapp_message.text must be a non-empty string');
-  if (!isNonEmptyString(message.idempotency_key)) errors.push('whatsapp_message.idempotency_key must be a non-empty string');
-  if (!['TEAM_PHONE', 'SIMULATED'].includes(message.mode)) errors.push('whatsapp_message.mode must be TEAM_PHONE or SIMULATED');
-  if (!isNonEmptyString(message.label)) errors.push('whatsapp_message.label must be a non-empty string');
-  if (message.mode === 'SIMULATED' && message.label !== 'SIMULATED') errors.push('whatsapp_message.label must be SIMULATED when mode is SIMULATED');
-  return result(errors);
-}
-
 /** Section 6 simulated quote validator. */
 function validateQuote(quote) {
   const errors = [];
@@ -179,7 +162,6 @@ function toSupplierDisplay(supplier) {
 module.exports = Object.freeze({
   validateRequest,
   validateSupplier,
-  validateWhatsAppMessage,
   validateQuote,
   validateVendorRecord,
   toSupplierDisplay,
