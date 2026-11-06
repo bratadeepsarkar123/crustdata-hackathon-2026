@@ -58,15 +58,13 @@ def run_demo(
             print(f"ERROR: Failed pre-flight credit check: {exc}", file=sys.stderr)
             return 1
 
-        # Enforce account-balance limit only (no arbitrary 200-credit cap)
-        credit_guard = CreditGuard(max_budget=start_credits)
-
-    # Run discovery pipeline
+    # Run discovery pipeline (passes credit_guard=None so run_discovery_pipeline performs
+    # its built-in pre-flight check comparing available balance vs estimated batch cost before spending)
     suppliers = run_discovery_pipeline(
         request=request,
         client=client,
         use_fixtures=(not live),
-        credit_guard=credit_guard,
+        credit_guard=None,
         max_candidates_to_verify=5 if live else None,
     )
 
@@ -95,7 +93,7 @@ def run_demo(
     if live and client:
         try:
             end_credits = check_account_credits(client)
-            actual_spent = start_credits - end_credits if start_credits is not None else credit_guard.total_credits_used
+            actual_spent = (start_credits - end_credits) if (start_credits is not None and end_credits is not None) else 0.0
             print("-" * 50)
             print("CRUSTDATA LIVE RUN USAGE SUMMARY")
             print(f"Starting credit balance : {start_credits:.2f}")

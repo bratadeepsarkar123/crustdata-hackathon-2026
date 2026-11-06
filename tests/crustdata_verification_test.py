@@ -170,5 +170,100 @@ class TestCrustdataVerification(unittest.TestCase):
         self.assertEqual(guard.total_credits_used, 8.0)
 
 
+    def test_verify_supplier_with_list_responses(self):
+        """Assert verify_supplier properly extracts matches[0].company_data from list responses."""
+        mock_client = MagicMock(spec=CrustdataClient)
+        mock_client.allow_live = True
+
+        mock_client.company_identify.return_value = [
+            {
+                "matches": [
+                    {
+                        "company_data": {
+                            "crustdata_company_id": 777888,
+                            "domain": "listcompany.com",
+                        }
+                    }
+                ]
+            }
+        ]
+        mock_client.company_enrich.return_value = [
+            {
+                "matches": [
+                    {
+                        "company_data": {
+                            "headcount": {"total": 350},
+                            "locations": {"headquarters": "Pune, India"},
+                            "basic_info": {"description": "Precision thermal sensors manufacturer"},
+                        }
+                    }
+                ]
+            }
+        ]
+
+        candidate = {
+            "name_internal": "List Company",
+            "primary_domain": "listcompany.com",
+            "sources": [],
+            "confidence": 0.85,
+        }
+
+        verified = verify_supplier(candidate, client=mock_client, use_fixtures=False)
+
+        mock_client.company_identify.assert_called_once()
+        mock_client.company_enrich.assert_called_once_with(
+            company_id=777888,
+            fields=["headcount", "locations", "basic_info"],
+        )
+        self.assertEqual(verified["headcount_total_internal"], 350)
+        self.assertEqual(verified["headquarters_internal"], "Pune, India")
+        self.assertEqual(verified["product_line_status"], "CONFIRMED")
+        self.assertGreaterEqual(verified["confidence"], 0.95)
+
+    def test_verify_supplier_empty_matches_on_identify(self):
+        """Empty matches on identify must not call enrich and mark HUMAN_OR_SIMULATED."""
+        mock_client = MagicMock(spec=CrustdataClient)
+        mock_client.allow_live = True
+        mock_client.company_identify.return_value = [{"matches": []}]
+
+        candidate = {
+            "name_internal": "Unmatched Co",
+            "primary_domain": "unmatched.com",
+            "sources": [],
+            "confidence": 0.80,
+        }
+
+        verified = verify_supplier(candidate, client=mock_client, use_fixtures=False)
+
+        mock_client.company_identify.assert_called_once()
+        mock_client.company_enrich.assert_not_called()
+        self.assertEqual(verified["product_line_status"], "HUMAN_OR_SIMULATED")
+        self.assertEqual(verified["confidence"], 0.5)
+
+    def test_verify_supplier_empty_matches_on_enrich(self):
+        """Empty matches on enrich must mark HUMAN_OR_SIMULATED and not crash."""
+        mock_client = MagicMock(spec=CrustdataClient)
+        mock_client.allow_live = True
+        mock_client.company_identify.return_value = [{"matches": [{"company_data": {"crustdata_company_id": 12345}}]}]
+        mock_client.company_enrich.return_value = [{"matches": []}]
+
+        candidate = {
+            "name_internal": "EnrichEmpty Co",
+            "primary_domain": "enrichemply.com",
+            "sources": [],
+            "confidence": 0.80,
+        }
+
+        verified = verify_supplier(candidate, client=mock_client, use_fixtures=False)
+
+        mock_client.company_identify.assert_called_once()
+        mock_client.company_enrich.assert_called_once_with(
+            company_id=12345,
+            fields=["headcount", "locations", "basic_info"],
+        )
+        self.assertEqual(verified["product_line_status"], "HUMAN_OR_SIMULATED")
+        self.assertEqual(verified["confidence"], 0.5)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -4,7 +4,7 @@ import os
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.crustdata.client import CrustdataClient, mask_key, verify_file_git_ignored
+from src.crustdata.client import CrustdataClient, mask_key, verify_file_git_ignored, load_api_key_from_env
 from src.crustdata.exceptions import (
     CrustdataAPIError,
     CrustdataAuthError,
@@ -142,6 +142,13 @@ class TestCrustdataClient(unittest.TestCase):
         # Propose run that exceeds 200
         with self.assertRaises(CrustdataBudgetExceededError):
             guard.estimate_and_check(190.0)
+
+
+    @patch.dict(os.environ, {"CRUSTDATA_API_KEY": "env_override_key_999"})
+    def test_load_api_key_prioritizes_os_environ_over_file(self):
+        """os.environ value must take precedence over any .env file."""
+        key = load_api_key_from_env()
+        self.assertEqual(key, "env_override_key_999")
 
 
 if __name__ == "__main__":

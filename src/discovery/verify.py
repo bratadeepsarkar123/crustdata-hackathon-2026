@@ -71,8 +71,10 @@ def verify_supplier(
                 matches = ident_res[0].get("matches", [])
                 if matches and isinstance(matches, list):
                     company_id = matches[0].get("company_data", {}).get("crustdata_company_id")
-                else:
+                elif "crustdata_company_id" in ident_res[0]:
                     company_id = ident_res[0].get("crustdata_company_id")
+                else:
+                    company_id = None
             elif isinstance(ident_res, dict):
                 company_id = ident_res.get("crustdata_company_id")
                 if not company_id and "results" in ident_res and ident_res["results"]:
@@ -100,8 +102,12 @@ def verify_supplier(
                     matches = enrich_res[0].get("matches", [])
                     if matches and isinstance(matches, list):
                         enrich_data = matches[0].get("company_data", {})
-                    else:
+                    elif "company_data" in enrich_res[0]:
+                        enrich_data = enrich_res[0]["company_data"]
+                    elif "headcount" in enrich_res[0] or "locations" in enrich_res[0] or "basic_info" in enrich_res[0]:
                         enrich_data = enrich_res[0]
+                    else:
+                        enrich_data = None
                 elif isinstance(enrich_res, dict):
                     enrich_data = enrich_res
             except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError, CrustdataBudgetExceededError):

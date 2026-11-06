@@ -54,19 +54,29 @@ def verify_file_git_ignored(filepath: str) -> bool:
 
 
 def load_api_key_from_env(env_var: str = "CRUSTDATA_API_KEY", env_file: Optional[str] = None) -> Optional[str]:
-    """Read API key only from local environment, verifying any secret file is git-ignored."""
-    if env_file is None and os.path.exists(".env"):
-        env_file = ".env"
+    """Read API key only from local environment, verifying any secret file is git-ignored.
 
-    # If a secret file path is specified, confirm it is git-ignored before reading
-    if env_file and os.path.exists(env_file):
-        if not verify_file_git_ignored(env_file):
+    Prioritizes an explicitly set environment variable, falling back to an
+    automatically discovered or specified git-ignored .env file.
+    """
+    # 1. Explicit environment variable takes precedence
+    key = os.environ.get(env_var) or os.environ.get("CRUSTDATA_KEY")
+    if key:
+        return key
+
+    # 2. Fall back to .env file if specified or found locally
+    target_file = env_file
+    if target_file is None and os.path.exists(".env"):
+        target_file = ".env"
+
+    if target_file and os.path.exists(target_file):
+        if not verify_file_git_ignored(target_file):
             raise CrustdataSecurityError(
-                f"Security violation: File '{env_file}' containing credentials is NOT git-ignored! "
+                f"Security violation: File '{target_file}' containing credentials is NOT git-ignored! "
                 "Refusing to read secrets from an unignored file."
             )
         # Parse simple KEY=VALUE
-        with open(env_file, "r", encoding="utf-8") as f:
+        with open(target_file, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#") and "=" in line:
@@ -74,8 +84,7 @@ def load_api_key_from_env(env_var: str = "CRUSTDATA_API_KEY", env_file: Optional
                     if k.strip() == env_var:
                         return v.strip().strip("'\"")
 
-    key = os.environ.get(env_var) or os.environ.get("CRUSTDATA_KEY")
-    return key
+    return None
 
 
 class CrustdataClient:

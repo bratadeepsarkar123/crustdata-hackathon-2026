@@ -25,11 +25,13 @@ def resolve_industry_filter(
 ) -> Optional[str]:
     """Resolve industry query to canonical closed-set value using company_autocomplete before filtering."""
     if use_fixtures or not client or not client.allow_live:
-        suggestions = FIXTURE_INDUSTRY_AUTOCOMPLETE.get("results", [])
+        suggestions = FIXTURE_INDUSTRY_AUTOCOMPLETE.get("suggestions", []) or FIXTURE_INDUSTRY_AUTOCOMPLETE.get("results", [])
         for sug in suggestions:
-            if industry_query.lower() in sug.lower():
-                return sug
-        return suggestions[0] if suggestions else None
+            val = sug.get("value") or sug.get("label") if isinstance(sug, dict) else sug
+            if industry_query.lower() in str(val).lower():
+                return str(val)
+        first = suggestions[0] if suggestions else None
+        return str(first.get("value") or first.get("label") or first) if isinstance(first, dict) else (str(first) if first else None)
 
     try:
         res = client.company_autocomplete(query=industry_query)
@@ -39,6 +41,9 @@ def resolve_industry_filter(
             if isinstance(first, dict):
                 return str(first.get("value") or first.get("label") or first)
             return str(first)
+    except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError, CrustdataBudgetExceededError):
+        # Stop-the-run errors must re-raise immediately; discovery must never proceed into paid search
+        raise
     except Exception as exc:
         logger.warning("company_autocomplete failed for '%s': %s", industry_query, exc)
 
