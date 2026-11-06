@@ -1,0 +1,26 @@
+{
+  "item": {"name": "neodymium speaker magnet", "thickness_mm": 3, "quantity_pcs": 1000, "buyer_location": "US"},
+  "constraints": {"supplier_country": "China", "sole_source": true, "moq": "very small"},
+  "suppliers": [
+    {"label": "Supplier 1", "claims": [
+      {"text": "Sintered neodymium (NdFeB) maker, HQ in Shandong, founded 2011, 201-500 staff band; describes custom magnets, fast delivery, ISO TS 16949", "citation": "company enrich: description, locations.headquarters, year_founded, employee_count_range"}]},
+    {"label": "Supplier 2", "claims": [
+      {"text": "Small permanent magnet maker including neodymium, 11-50 staff band, founded 2004, exports to the US among other regions", "citation": "company enrich: description, employee_count_range, year_founded"}]},
+    {"label": "Supplier 3", "claims": [
+      {"text": "Listed rare earth magnet maker, founded 2003, ISO 9001 and IATF 16949, motor and custom assembly focus", "citation": "company enrich: description"}]},
+    {"label": "Supplier 4", "claims": [
+      {"text": "Large listed magnet maker, founded 1990, 5001-10000 staff band, neodymium patent licence", "citation": "company enrich: description, employee_count_range"}]},
+    {"label": "Supplier 5", "claims": [
+      {"text": "Sintered NdFeB maker, founded 2000, 201-500 staff band, quality system certifications listed", "citation": "company enrich: description"}]}
+  ],
+  "recommended_label": "Supplier 1",
+  "reason": "Description clearly states sintered neodymium permanent magnets, HQ in China, custom production with fast delivery, and a quality system. Company size and age are mid-range, a reasonable quality proxy. (company enrich: description, employee_count_range, year_founded)",
+  "top_risk": "MOQ not verified. The company also describes very large volume capacity, so very small orders may get low priority. All claims are self-reported. (company enrich: description)",
+  "moq_evidence": "Three web searches (Suppliers 1, 2, 3) returned no MOQ figures. No MOQ number is stated or assumed. (web search)",
+  "unverified": [
+    "MOQ for a 3 mm thick speaker magnet",
+    "Whether the supplier can act as the sole source",
+    "Capability for thin 3 mm parts, grade and coating",
+    "Headcount counts are profile counts, not true employee numbers"
+  ]
+}

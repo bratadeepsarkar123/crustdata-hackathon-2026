@@ -64,3 +64,7 @@ Exact sample-text matching plus a comparison with expected parser output worked 
 The next integration would replace fixture candidate discovery and verification with the team's separately owned discovery module, then connect the real policy module. Any later messaging demo must remain limited to team phones and requires owner direction; this offline run sends nothing. Unresolved or exception cases currently stop with a clear rejection and no PO rather than opening a human exception queue. Live supplier outreach, bookings, payments, and production use are out of scope. A real-data path requires a separate owner decision and data, messaging, and policy review.
 
 No secrets are configured or needed. Do not add keys or local credentials to this repository. Code commits or pushes require explicit direction from the repository owner.
+
+## One-item demo
+Run `node src/demo/one-item.cjs` for a neutral, labelled supplier shortlist screen.
+Test it with `node --test tests/one-item-demo.test.cjs`. Output is SIMULATED: no company contacted, no email sent.
