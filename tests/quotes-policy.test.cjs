@@ -235,3 +235,38 @@ test('evaluateQuotesPolicy validates quotes and never leaks private fields', () 
   assert.equal(candidate.quote.name_internal, undefined);
   assert.equal(candidate.quote.raw_company_name, undefined);
 });
+
+test('held sample must not have a purchase order (fails if HOLD has a CREATED order)', () => {
+  const samplePath = path.resolve(__dirname, '../samples/one-item/neutral-output.json');
+  const sample = JSON.parse(fs.readFileSync(samplePath, 'utf8'));
+
+  // 1. Verify neutral-output.json enforces purchase_order: null when held
+  assert.equal(sample.policy_evaluation.status, 'HOLD');
+  assert.equal(sample.purchase_order, null);
+  assert.equal(sample.purchase_order_status, 'NOT_ATTEMPTED_WHILE_HELD');
+  assert.ok(sample.hypothetical_confirmed_case);
+  assert.ok(sample.hypothetical_confirmed_case.purchase_order);
+
+  // 2. Regression guard: a validator rule asserting HOLD sample cannot have a CREATED purchase_order
+  function validateSampleIntegrity(data) {
+    if (data.policy_evaluation && data.policy_evaluation.status === 'HOLD' && data.purchase_order !== null) {
+      throw new Error('Invalid sample: a held quote cannot have an issued purchase order');
+    }
+    return true;
+  }
+
+  assert.equal(validateSampleIntegrity(sample), true);
+
+  // Assert it throws on regression (HOLD + CREATED purchase order)
+  const regressionSample = {
+    ...sample,
+    purchase_order: {
+      po_number: 'SIM-PO-MAGNET-001',
+      status: 'CREATED',
+    },
+  };
+  assert.throws(
+    () => validateSampleIntegrity(regressionSample),
+    /Invalid sample: a held quote cannot have an issued purchase order/
+  );
+});

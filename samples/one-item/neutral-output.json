@@ -41,16 +41,29 @@
     "reason": "HOLD: MOQ not verified",
     "label": "SIMULATED"
   },
-  "purchase_order": {
-    "idempotency_key": "po:v1:one-item-neodymium-speaker-magnet-1000",
-    "po_number": "SIM-PO-MAGNET-001",
-    "display_label": "Supplier 1",
-    "item": "neodymium speaker magnet, 3 mm thick",
-    "quantity": 1000,
-    "unit_price": 1.25,
-    "total": 1250,
-    "currency": "USD",
-    "status": "CREATED",
-    "label": "SIMULATED"
+  "purchase_order": null,
+  "purchase_order_status": "NOT_ATTEMPTED_WHILE_HELD",
+  "hypothetical_confirmed_case": {
+    "condition": "Supplier quantity / MOQ explicitly confirmed",
+    "policy_decision": {
+      "status": "APPROVE",
+      "approved": true,
+      "total": 1250,
+      "budget": 2500,
+      "reason": "APPROVE: total is within budget and lead time is within deadline.",
+      "label": "SIMULATED"
+    },
+    "purchase_order": {
+      "idempotency_key": "po:v1:one-item-neodymium-speaker-magnet-1000",
+      "po_number": "SIM-PO-MAGNET-001",
+      "display_label": "Supplier 1",
+      "item": "neodymium speaker magnet, 3 mm thick",
+      "quantity": 1000,
+      "unit_price": 1.25,
+      "total": 1250,
+      "currency": "USD",
+      "status": "CREATED",
+      "label": "SIMULATED"
+    }
   }
 }
