@@ -32,4 +32,54 @@ function checkPolicy({ request, quote }) {
   });
 }
 
-module.exports = { checkPolicy };
+/**
+ * Compare all candidate quotes against request policy.
+ * Compliant quotes are ranked. Non-compliant quotes (over budget, lead time exceeded, etc.)
+ * are routed directly to the exceptions queue with the detailed failure reason.
+ */
+function evaluateQuotesPolicy({ request, quotes }) {
+  if (!Array.isArray(quotes)) {
+    throw new TypeError('quotes must be an array');
+  }
+
+  const approvedCandidates = [];
+  const exceptionsQueue = [];
+
+  for (const quote of quotes) {
+    const decision = checkPolicy({ request, quote });
+    if (decision.approved) {
+      approvedCandidates.push({
+        display_label: quote.display_label,
+        quote,
+        decision,
+        total: quote.unit_price * request.quantity,
+        label: 'SIMULATED',
+      });
+    } else {
+      exceptionsQueue.push({
+        display_label: quote.display_label,
+        quote,
+        reason: decision.reason,
+        label: 'SIMULATED',
+      });
+    }
+  }
+
+  // Rank approved by total cost ascending, then lead time ascending
+  approvedCandidates.sort((a, b) => {
+    if (a.total !== b.total) return a.total - b.total;
+    return a.quote.lead_time_days - b.quote.lead_time_days;
+  });
+
+  return Object.freeze({
+    label: 'SIMULATED',
+    approved_candidates: Object.freeze(approvedCandidates),
+    exceptions_queue: Object.freeze(exceptionsQueue),
+    best_candidate: approvedCandidates.length > 0 ? approvedCandidates[0] : null,
+  });
+}
+
+module.exports = {
+  checkPolicy,
+  evaluateQuotesPolicy,
+};
