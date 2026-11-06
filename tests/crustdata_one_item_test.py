@@ -350,5 +350,23 @@ class TestOneItemDiscovery(unittest.TestCase):
             for yr in forbidden_years:
                 self.assertNotIn(yr, text_out, f"Founding year '{yr}' leaked in {desc}!")
 
+    def test_shortlist_payload_rejects_non_pcs_unit(self):
+        """to_shortlist_payload strictly rejects units other than 'pcs' / 'pieces' (e.g. kg, liters)."""
+        req = build_one_item_request(quantity=10, unit="kg")
+        with self.assertRaises(ValueError) as ctx:
+            to_shortlist_payload([], req)
+        self.assertIn("Unsupported unit 'kg'", str(ctx.exception))
+
+        req_meters = build_one_item_request(quantity=100, unit="meters")
+        with self.assertRaises(ValueError):
+            to_shortlist_payload([], req_meters)
+
+    def test_cli_shortlist_json_rejects_non_pcs_unit(self):
+        """CLI --shortlist-json fails with non-zero exit code when given a non-pcs unit (e.g. --unit kg)."""
+        cmd = [sys.executable, "src/discovery/option_c_run.py", "--quantity", "10", "--unit", "kg", "--shortlist-json"]
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("Unsupported unit 'kg'", proc.stderr)
+
 if __name__ == "__main__":
     unittest.main()

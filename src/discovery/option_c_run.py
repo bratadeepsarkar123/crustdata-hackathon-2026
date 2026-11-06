@@ -92,7 +92,16 @@ def to_shortlist_payload(
 
     Bridges Discovery output (Person 2) with the desk's one-item shortlist schema.
     Carries run mode and a SIMULATED marker when run offline.
+    Rejects any unit other than 'pcs' / 'pieces' for this format.
     """
+    unit = str(request.get("unit", "")).strip().lower()
+    allowed_pcs_units = {"pcs", "pieces", "piece", "pc"}
+    if unit not in allowed_pcs_units:
+        raise ValueError(
+            f"Unsupported unit '{request.get('unit')}' for shortlist JSON: schema strictly requires quantity in 'pcs'. "
+            "Please request items with unit 'pcs' or 'pieces'."
+        )
+
     spec_thickness = extract_thickness_mm(request)
 
     sim_marker = " [SIMULATED fixture; no live Crustdata call]" if is_simulated else ""
@@ -283,28 +292,32 @@ def main() -> int:
         return 1
 
     # Option C Output
-    if args.shortlist_json:
-        req = build_one_item_request(
-            item=args.item,
-            quantity=args.quantity,
-            unit=args.unit,
-            spec=args.spec,
-            buyer_location=args.buyer_location,
-            supplier_region=args.supplier_region,
-            moq=args.moq,
-        )
-        shortlist = to_shortlist_payload(suppliers, req, is_simulated=(not args.live))
-        output_str = json.dumps(shortlist, indent=2)
-    elif args.json:
-        display_only = [to_supplier_display(s) for s in suppliers]
-        json_payload = {
-            "label": "SIMULATED" if not args.live else "LIVE",
-            "mode": "OFFLINE_FIXTURE_ONLY" if not args.live else "LIVE_CRUSTDATA",
-            "suppliers": display_only,
-        }
-        output_str = json.dumps(json_payload, indent=2)
-    else:
-        output_str = format_screen_display(suppliers, is_simulated=(not args.live))
+    try:
+        if args.shortlist_json:
+            req = build_one_item_request(
+                item=args.item,
+                quantity=args.quantity,
+                unit=args.unit,
+                spec=args.spec,
+                buyer_location=args.buyer_location,
+                supplier_region=args.supplier_region,
+                moq=args.moq,
+            )
+            shortlist = to_shortlist_payload(suppliers, req, is_simulated=(not args.live))
+            output_str = json.dumps(shortlist, indent=2)
+        elif args.json:
+            display_only = [to_supplier_display(s) for s in suppliers]
+            json_payload = {
+                "label": "SIMULATED" if not args.live else "LIVE",
+                "mode": "OFFLINE_FIXTURE_ONLY" if not args.live else "LIVE_CRUSTDATA",
+                "suppliers": display_only,
+            }
+            output_str = json.dumps(json_payload, indent=2)
+        else:
+            output_str = format_screen_display(suppliers, is_simulated=(not args.live))
+    except ValueError as exc:
+        print(f"Option C export error: {exc}", file=sys.stderr)
+        return 1
 
     # Security check: Ensure Option C compliance (zero company names in stdout)
     for s in suppliers:
