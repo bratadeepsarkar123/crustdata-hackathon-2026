@@ -33,6 +33,49 @@ function checkPolicy({ request, quote }) {
 }
 
 /**
+ * Task 3: Evaluate quote with granular status: approve, hold, or reject.
+ * Includes explicit rule that flags "MOQ not verified" as a hold.
+ */
+function evaluatePolicyDecision({ request, quote, supplier, options = {} }) {
+  // Check for hold conditions (e.g. MOQ not verified)
+  const isMoqUnverified =
+    options.moq_verified === false ||
+    options.moq_status === 'UNVERIFIED' ||
+    Boolean(quote && quote.moq_verified === false) ||
+    Boolean(supplier && supplier.product_line_status === 'HUMAN_OR_SIMULATED');
+
+  if (isMoqUnverified) {
+    return Object.freeze({
+      label: 'SIMULATED',
+      status: 'HOLD',
+      approved: false,
+      display_label: quote.display_label,
+      reason: 'HOLD: MOQ not verified',
+    });
+  }
+
+  // Check standard policy rules (budget, deadline, missing fields)
+  const baseDecision = checkPolicy({ request, quote });
+  if (!baseDecision.approved) {
+    return Object.freeze({
+      label: 'SIMULATED',
+      status: 'REJECT',
+      approved: false,
+      display_label: quote.display_label,
+      reason: baseDecision.reason,
+    });
+  }
+
+  return Object.freeze({
+    label: 'SIMULATED',
+    status: 'APPROVE',
+    approved: true,
+    display_label: quote.display_label,
+    reason: 'APPROVE: total is within budget and lead time is within deadline.',
+  });
+}
+
+/**
  * Compare all candidate quotes against request policy.
  * Compliant quotes are ranked. Non-compliant quotes (over budget, lead time exceeded, etc.)
  * are routed directly to the exceptions queue with the detailed failure reason.
@@ -81,5 +124,6 @@ function evaluateQuotesPolicy({ request, quotes }) {
 
 module.exports = {
   checkPolicy,
+  evaluatePolicyDecision,
   evaluateQuotesPolicy,
 };

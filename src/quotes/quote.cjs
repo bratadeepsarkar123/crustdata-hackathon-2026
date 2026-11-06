@@ -4,6 +4,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { validateQuote } = require('../contracts/index.cjs');
+const { ONE_ITEM_REQUEST, ONE_ITEM_QUOTE, buildOneItemQuote } = require('./one-item-quote.cjs');
 
 const DEFAULT_SIMULATED_QUOTES_PATH = path.resolve(
   __dirname,
@@ -74,4 +75,7 @@ module.exports = {
   buildSimulatedQuote,
   loadSimulatedQuotes,
   rankQuotes,
+  ONE_ITEM_REQUEST,
+  ONE_ITEM_QUOTE,
+  buildOneItemQuote,
 };

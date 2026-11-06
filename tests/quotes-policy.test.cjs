@@ -5,8 +5,9 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
-const { buildSimulatedQuote } = require('../src/quotes/quote.cjs');
-const { checkPolicy } = require('../src/policy/policy.cjs');
+const { buildSimulatedQuote, buildOneItemQuote, ONE_ITEM_QUOTE } = require('../src/quotes/quote.cjs');
+const { validateQuote } = require('../src/contracts/index.cjs');
+const { checkPolicy, evaluatePolicyDecision } = require('../src/policy/policy.cjs');
 const { createPurchaseOrderWriter } = require('../src/po/writer.cjs');
 const fullFlowFixture = require('../samples/full-flow.cjs');
 
@@ -50,7 +51,7 @@ test('policy checks enforce budget and delivery deadline', () => {
   assert.equal(tooSlow.approved, false);
 });
 
-test('retries with the same inputs return the same purchase order number', async (t) => {
+test('retries with the same inputs return the same purchase order number and handles key conflict', async (t) => {
   const stateDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'quotes-policy-po-'));
   t.after(() => fs.rmSync(stateDirectory, { recursive: true, force: true }));
 
@@ -64,8 +65,84 @@ test('retries with the same inputs return the same purchase order number', async
   };
 
   const first = await writer.writeVendorAndPo(inputs);
-  const retry = await writer.writeVendorAndPo(inputs);
-
+  assert.equal(first.status, 'CREATED');
   assert.ok(first.purchase_order.po_number);
+
+  const retry = await writer.writeVendorAndPo(inputs);
+  assert.equal(retry.status, 'EXISTS');
   assert.equal(retry.purchase_order.po_number, first.purchase_order.po_number);
+
+  const conflictInputs = {
+    ...inputs,
+    quote: {
+      ...inputs.quote,
+      unit_price: 45,
+    },
+  };
+  const conflict = await writer.writeVendorAndPo(conflictInputs);
+  assert.equal(conflict.status, 'KEY_CONFLICT');
+  assert.equal(conflict.purchase_order, null);
+});
+
+test('one-item quote builder conforms to validateQuote with neutral label and SIMULATED flag', () => {
+  const quote = buildOneItemQuote();
+  assert.deepEqual(quote, {
+    display_label: 'Supplier 1',
+    unit_price: 1.25,
+    lead_time_days: 7,
+    label: 'SIMULATED',
+  });
+  const check = validateQuote(quote);
+  assert.equal(check.valid, true);
+  assert.equal(check.errors.length, 0);
+
+  const staticCheck = validateQuote(ONE_ITEM_QUOTE);
+  assert.equal(staticCheck.valid, true);
+  assert.equal(staticCheck.errors.length, 0);
+});
+
+test('one-item policy evaluation handles approve, hold (MOQ not verified), and reject', () => {
+  const request = {
+    item: 'neodymium speaker magnet, 3 mm thick',
+    quantity: 1000,
+    budget: 2500,
+    currency: 'USD',
+    deadline_days: 14,
+    region: 'US',
+    missing_fields: [],
+  };
+  const quote = buildOneItemQuote(); // unit_price: 1.25, total: 1250, lead_time: 7
+
+  // 1. Hold on unverified MOQ
+  const holdDecision = evaluatePolicyDecision({
+    request,
+    quote,
+    options: { moq_verified: false },
+  });
+  assert.equal(holdDecision.status, 'HOLD');
+  assert.equal(holdDecision.approved, false);
+  assert.equal(holdDecision.display_label, 'Supplier 1');
+  assert.equal(holdDecision.reason, 'HOLD: MOQ not verified');
+  assert.equal(holdDecision.label, 'SIMULATED');
+
+  // 2. Approve when compliant and MOQ is confirmed
+  const approveDecision = evaluatePolicyDecision({
+    request,
+    quote,
+    options: { moq_verified: true },
+  });
+  assert.equal(approveDecision.status, 'APPROVE');
+  assert.equal(approveDecision.approved, true);
+  assert.equal(approveDecision.display_label, 'Supplier 1');
+  assert.match(approveDecision.reason, /within budget/);
+
+  // 3. Reject when over budget
+  const rejectDecision = evaluatePolicyDecision({
+    request: { ...request, budget: 1000 }, // 1250 > 1000
+    quote,
+    options: { moq_verified: true },
+  });
+  assert.equal(rejectDecision.status, 'REJECT');
+  assert.equal(rejectDecision.approved, false);
+  assert.match(rejectDecision.reason, /over the budget/);
 });
