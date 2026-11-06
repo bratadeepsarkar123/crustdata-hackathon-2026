@@ -134,6 +134,14 @@ class TestCrustdataClient(unittest.TestCase):
         self.assertEqual(cost, 10.60)
         self.assertLess(cost, 200.0)
 
+    def test_credit_guard_has_no_run_cap_by_default(self):
+        guard = CreditGuard()
+        self.assertIsNone(guard.max_budget)
+        guard.estimate_and_check(5000.0)
+        guard.record_usage(4500.0, "large run")
+        guard.record_usage(900.0, "large run")
+        self.assertEqual(guard.total_credits_used, 5400.0)
+
     def test_credit_guard_budget_under_200(self):
         guard = CreditGuard(max_budget=200.0)
         guard.record_usage(10.6, "batch run")

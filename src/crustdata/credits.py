@@ -9,8 +9,9 @@ from .exceptions import CrustdataBudgetExceededError
 
 logger = logging.getLogger("crustdata.credits")
 
-# Safety limit specified in task brief: run must use strictly under 200 credits
-MAX_RUN_CREDIT_BUDGET = 200.0
+# No self-imposed run cap (owner decision, 2026-11-06). The real ceiling is the
+# account balance, checked before any live call in discovery/service.py.
+MAX_RUN_CREDIT_BUDGET = None
 
 # Unit costs from Section 7 of MASTER-HANDOFF-supplier.md
 COST_COMPANY_SEARCH_PER_RESULT = 0.03
@@ -63,18 +64,22 @@ def check_account_credits(client) -> float:
 
 
 class CreditGuard:
-    """Monitors credit consumption and enforces the < 200 credits safety budget."""
+    """Tracks credit consumption for a run.
 
-    def __init__(self, max_budget: float = MAX_RUN_CREDIT_BUDGET):
+    max_budget=None means no run cap; only the account balance limits spending.
+    """
+
+    def __init__(self, max_budget: Optional[float] = MAX_RUN_CREDIT_BUDGET):
         self.max_budget = max_budget
         self.total_credits_used = 0.0
 
     def record_usage(self, credits: float, operation: str = "") -> None:
-        """Record credit usage and verify we have not exceeded the budget."""
+        """Record credit usage and verify we have not exceeded the budget, if one is set."""
         self.total_credits_used += credits
-        logger.info("Crustdata spent %.2f credits on %s (Total run spend: %.2f / %.2f)",
-                    credits, operation, self.total_credits_used, self.max_budget)
-        if self.total_credits_used >= self.max_budget:
+        logger.info("Crustdata spent %.2f credits on %s (Total run spend: %.2f / %s)",
+                    credits, operation, self.total_credits_used,
+                    "no cap" if self.max_budget is None else f"{self.max_budget:.2f}")
+        if self.max_budget is not None and self.total_credits_used >= self.max_budget:
             raise CrustdataBudgetExceededError(
                 f"Credit budget violation: Run has spent {self.total_credits_used:.2f} credits, "
                 f"exceeding the safety limit of {self.max_budget:.2f} credits."
@@ -82,6 +87,8 @@ class CreditGuard:
 
     def estimate_and_check(self, estimated_credits: float) -> None:
         """Check if an upcoming operation would exceed the total run budget."""
+        if self.max_budget is None:
+            return
         projected = self.total_credits_used + estimated_credits
         if projected >= self.max_budget:
             raise CrustdataBudgetExceededError(

@@ -11,7 +11,6 @@ from src.crustdata.credits import (
     CreditGuard,
     calculate_batch_cost,
     check_account_credits,
-    MAX_RUN_CREDIT_BUDGET,
 )
 from src.crustdata.exceptions import (
     CrustdataBudgetExceededError,
@@ -68,7 +67,7 @@ def run_discovery_pipeline(
                 f"Estimated run cost ({estimated_cost:.2f}). Failing closed."
             )
 
-        guard = CreditGuard(max_budget=min(MAX_RUN_CREDIT_BUDGET, available_credits))
+        guard = CreditGuard(max_budget=available_credits)
         guard.estimate_and_check(estimated_cost)
 
     # Step 2: Search candidate suppliers
