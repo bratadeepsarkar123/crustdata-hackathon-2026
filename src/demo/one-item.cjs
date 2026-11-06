@@ -3,6 +3,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+// Every citation shown on screen carries this label (README: "marked as a simulated fixture source").
+const SIMULATED_SOURCE = '[SIMULATED fixture; no live Crustdata call]';
+
 function render(data) {
   const { item, constraints: c } = data;
   const out = [];
@@ -14,13 +17,13 @@ function render(data) {
   for (const s of data.suppliers) {
     for (const cl of s.claims) {
       out.push(`  ${s.label}: ${cl.text}`);
-      out.push(`    cited: ${cl.citation}`);
+      out.push(`    cited: ${cl.citation} ${SIMULATED_SOURCE}`);
     }
   }
   out.push('');
   out.push(`Recommended: ${data.recommended_label}`);
-  out.push(`  Reason: ${data.reason}`);
-  out.push(`  Top risk: ${data.top_risk}`);
+  out.push(`  Reason: ${data.reason} ${SIMULATED_SOURCE}`);
+  out.push(`  Top risk: ${data.top_risk} ${SIMULATED_SOURCE}`);
   out.push('');
   out.push('Still not verified:');
   for (const u of data.unverified) out.push(`  - ${u}`);
