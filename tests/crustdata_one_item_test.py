@@ -154,6 +154,8 @@ class TestOneItemDiscovery(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, f"CLI exited with error: {proc.stderr}")
 
         data = json.loads(proc.stdout)
+        self.assertEqual(data.get("label"), "SIMULATED")
+        self.assertEqual(data.get("mode"), "OFFLINE_FIXTURE_ONLY")
         self.assertIn("item", data)
         self.assertIn("constraints", data)
         self.assertIn("suppliers", data)
@@ -166,6 +168,7 @@ class TestOneItemDiscovery(unittest.TestCase):
         self.assertEqual(data["suppliers"][0]["label"], "Supplier 1")
         self.assertTrue(len(data["suppliers"][0]["claims"]) > 0)
         self.assertIn("citation", data["suppliers"][0]["claims"][0])
+        self.assertIn("[SIMULATED fixture; no live Crustdata call]", data["suppliers"][0]["claims"][0]["citation"])
 
     def test_live_path_fails_closed_without_api_key(self):
         """--live must fail closed with CrustdataAPIError if no key is configured."""
@@ -256,6 +259,96 @@ class TestOneItemDiscovery(unittest.TestCase):
         req_dec = build_one_item_request(spec="2.5 mm precision magnet")
         payload_dec = to_shortlist_payload([], req_dec)
         self.assertEqual(payload_dec["item"]["thickness_mm"], 2.5)
+
+    def test_json_outputs_carry_run_mode_and_simulated_marker_offline(self):
+        """Verify that --shortlist-json and --json carry run mode and SIMULATED marker when offline."""
+        cmd_shortlist = [sys.executable, "src/discovery/option_c_run.py", "--shortlist-json"]
+        proc_s = subprocess.run(cmd_shortlist, capture_output=True, text=True, check=False)
+        self.assertEqual(proc_s.returncode, 0)
+        data_s = json.loads(proc_s.stdout)
+        self.assertEqual(data_s["label"], "SIMULATED")
+        self.assertEqual(data_s["mode"], "OFFLINE_FIXTURE_ONLY")
+
+        cmd_json = [sys.executable, "src/discovery/option_c_run.py", "--json"]
+        proc_j = subprocess.run(cmd_json, capture_output=True, text=True, check=False)
+        self.assertEqual(proc_j.returncode, 0)
+        data_j = json.loads(proc_j.stdout)
+        self.assertEqual(data_j["label"], "SIMULATED")
+        self.assertEqual(data_j["mode"], "OFFLINE_FIXTURE_ONLY")
+        self.assertEqual(len(data_j["suppliers"]), 5)
+
+    def test_company_names_locations_headcount_founding_year_absent_from_output(self):
+        """Verify that company names, locations, headcount numbers, and founding years are absent from output."""
+        suppliers = run_one_item_discovery(live=False)
+        screen_output = format_screen_display(suppliers, is_simulated=True)
+
+        req = build_one_item_request()
+        shortlist = to_shortlist_payload(suppliers, req, is_simulated=True)
+        shortlist_str = json.dumps(shortlist)
+
+        # 1. Company names that must be absent
+        forbidden_names = [
+            "Shandong Sinter Magnetics",
+            "Ningbo Small Magnetics",
+            "Beijing Rare Earth Dynamics",
+            "Hangzhou Large Magnetics",
+            "Zhejiang NdFeB Precision",
+            "Alpha Thermal",
+            "Bravo Electro",
+            "Charlie Sensors",
+            "Delta Pyro",
+            "Echo Instruments",
+        ]
+        # 2. Company locations (headquarters / cities / regions) that must be absent from supplier facts
+        forbidden_locations = [
+            "Shandong",
+            "Ningbo",
+            "Beijing",
+            "Hangzhou",
+            "Zhejiang",
+            "Mumbai",
+            "Pune",
+            "Bengaluru",
+            "Ahmedabad",
+        ]
+        # 3. Headcount values that must be absent
+        forbidden_headcounts = [
+            "350",
+            "600",
+            "7500",
+            "280",
+            "201-500",
+            "11-50",
+            "501-1000",
+            "5001-10000",
+            "650",
+            "150",
+            "75",
+            "45",
+        ]
+        # 4. Founding years that must be absent
+        forbidden_years = [
+            "2011",
+            "2004",
+            "2003",
+            "1990",
+            "2000",
+            "1976",
+            "1980",
+            "1952",
+            "1977",
+            "2012",
+        ]
+
+        for text_out, desc in [(screen_output, "screen_output"), (shortlist_str, "shortlist_json")]:
+            for name in forbidden_names:
+                self.assertNotIn(name.lower(), text_out.lower(), f"Company name '{name}' leaked in {desc}!")
+            for loc in forbidden_locations:
+                self.assertNotIn(loc.lower(), text_out.lower(), f"Location '{loc}' leaked in {desc}!")
+            for hc in forbidden_headcounts:
+                self.assertNotIn(hc, text_out, f"Headcount '{hc}' leaked in {desc}!")
+            for yr in forbidden_years:
+                self.assertNotIn(yr, text_out, f"Founding year '{yr}' leaked in {desc}!")
 
 if __name__ == "__main__":
     unittest.main()

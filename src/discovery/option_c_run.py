@@ -61,47 +61,63 @@ def build_one_item_request(
     }
 
 
+def extract_thickness_mm(request: Dict[str, Any]) -> float:
+    """Extract thickness in mm from request fields (thickness_mm, spec, item)."""
+    if request.get("thickness_mm") is not None:
+        try:
+            val = float(request["thickness_mm"])
+            return int(val) if val.is_integer() else val
+        except (ValueError, TypeError):
+            pass
+
+    for key in ("spec", "item"):
+        text = str(request.get(key, ""))
+        match = re.search(r"(\d+(?:\.\d+)?)\s*mm\b", text, re.IGNORECASE)
+        if match:
+            num = float(match.group(1))
+            return int(num) if num.is_integer() else num
+
+    raise ValueError(
+        f"Could not determine thickness_mm from request specification: {request}. "
+        "Please provide thickness in item or spec (e.g. '3 mm') or pass thickness_mm."
+    )
+
+
 def to_shortlist_payload(
     suppliers: List[Dict[str, Any]],
     request: Dict[str, Any],
+    is_simulated: bool = True,
 ) -> Dict[str, Any]:
     """Convert discovered suppliers into the schema of samples/one-item/supplier-shortlist.json.
 
     Bridges Discovery output (Person 2) with the desk's one-item shortlist schema.
+    Carries run mode and a SIMULATED marker when run offline.
     """
-    spec_thickness = 3
-    spec_str = str(request.get("spec", ""))
-    match = re.search(r"(\d+(?:\.\d+)?)\s*mm", spec_str, re.IGNORECASE)
-    if match:
-        val = match.group(1)
-        spec_thickness = float(val) if "." in val else int(val)
-    elif request.get("thickness_mm") is not None:
-        spec_thickness = request.get("thickness_mm")
+    spec_thickness = extract_thickness_mm(request)
+
+    sim_marker = " [SIMULATED fixture; no live Crustdata call]" if is_simulated else ""
 
     shortlist_suppliers = []
     for s in suppliers:
-        claims = []
-        sources_list = [f"{src['endpoint'].replace('POST /company/', '')}: {src['field']}" for src in s.get("sources", [])]
-        citation_str = "company enrich: " + ", ".join([src["field"] for src in s.get("sources", []) if "enrich" in src.get("endpoint", "")])
-        if not citation_str or citation_str == "company enrich: ":
-            citation_str = "company identify: primary_domain"
+        citation_str = f"company enrich: description{sim_marker}"
 
-        # Neutral summary statement
         claim_text = (
             f"Verified supplier profile, status {s.get('product_line_status')}, "
             f"confidence {s.get('confidence', 0.95):.0%}"
         )
-        claims.append({
-            "text": claim_text,
-            "citation": citation_str,
-        })
-
         shortlist_suppliers.append({
             "label": s.get("display_label", "Supplier"),
-            "claims": claims,
+            "claims": [
+                {
+                    "text": claim_text,
+                    "citation": citation_str,
+                }
+            ],
         })
 
-    return {
+    payload: Dict[str, Any] = {
+        "label": "SIMULATED" if is_simulated else "LIVE",
+        "mode": "OFFLINE_FIXTURE_ONLY" if is_simulated else "LIVE_CRUSTDATA",
         "item": {
             "name": request.get("item", "neodymium speaker magnet"),
             "thickness_mm": spec_thickness,
@@ -116,6 +132,7 @@ def to_shortlist_payload(
         "suppliers": shortlist_suppliers,
         "recommended_label": suppliers[0].get("display_label") if suppliers else None,
     }
+    return payload
 
 
 def run_one_item_discovery(
@@ -276,11 +293,16 @@ def main() -> int:
             supplier_region=args.supplier_region,
             moq=args.moq,
         )
-        shortlist = to_shortlist_payload(suppliers, req)
+        shortlist = to_shortlist_payload(suppliers, req, is_simulated=(not args.live))
         output_str = json.dumps(shortlist, indent=2)
     elif args.json:
         display_only = [to_supplier_display(s) for s in suppliers]
-        output_str = json.dumps(display_only, indent=2)
+        json_payload = {
+            "label": "SIMULATED" if not args.live else "LIVE",
+            "mode": "OFFLINE_FIXTURE_ONLY" if not args.live else "LIVE_CRUSTDATA",
+            "suppliers": display_only,
+        }
+        output_str = json.dumps(json_payload, indent=2)
     else:
         output_str = format_screen_display(suppliers, is_simulated=(not args.live))
 
