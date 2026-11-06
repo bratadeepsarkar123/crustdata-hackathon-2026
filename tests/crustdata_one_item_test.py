@@ -368,5 +368,45 @@ class TestOneItemDiscovery(unittest.TestCase):
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("Unsupported unit 'kg'", proc.stderr)
 
+    def test_shortlist_payload_cites_actual_sources(self):
+        """to_shortlist_payload cites actual sources present on supplier; keeps failed verification explicit."""
+        req = build_one_item_request()
+        # 1. Enriched supplier
+        s_enrich = {
+            "display_label": "Supplier 1",
+            "product_line_status": "CONFIRMED",
+            "confidence": 0.98,
+            "sources": [
+                {"field": "primary_domain", "endpoint": "POST /company/identify"},
+                {"field": "basic_info.description", "endpoint": "POST /company/enrich"},
+            ],
+        }
+        res_enrich = to_shortlist_payload([s_enrich], req, is_simulated=False)
+        self.assertEqual(res_enrich["suppliers"][0]["claims"][0]["citation"], "company enrich: description")
+        self.assertIn("CONFIRMED", res_enrich["suppliers"][0]["claims"][0]["text"])
+
+        # 2. Identify only (enrich failed)
+        s_ident = {
+            "display_label": "Supplier 2",
+            "product_line_status": "HUMAN_OR_SIMULATED",
+            "confidence": 0.5,
+            "sources": [
+                {"field": "primary_domain", "endpoint": "POST /company/identify"},
+            ],
+        }
+        res_ident = to_shortlist_payload([s_ident], req, is_simulated=False)
+        self.assertEqual(res_ident["suppliers"][0]["claims"][0]["citation"], "company identify: primary_domain")
+        self.assertIn("Identified", res_ident["suppliers"][0]["claims"][0]["text"])
+
+        # 3. Unverified (no sources)
+        s_unverified = {
+            "display_label": "Supplier 3",
+            "product_line_status": "HUMAN_OR_SIMULATED",
+            "confidence": 0.0,
+            "sources": [],
+        }
+        res_unverified = to_shortlist_payload([s_unverified], req, is_simulated=False)
+        self.assertEqual(res_unverified["suppliers"][0]["claims"][0]["citation"], "unverified; no sources")
+
 if __name__ == "__main__":
     unittest.main()

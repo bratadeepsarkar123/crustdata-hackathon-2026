@@ -108,12 +108,35 @@ def to_shortlist_payload(
 
     shortlist_suppliers = []
     for s in suppliers:
-        citation_str = f"company enrich: description{sim_marker}"
-
-        claim_text = (
-            f"Verified supplier profile, status {s.get('product_line_status')}, "
-            f"confidence {s.get('confidence', 0.95):.0%}"
+        sources = s.get("sources", [])
+        has_enrich_desc = any(
+            src.get("field") == "basic_info.description" and "enrich" in src.get("endpoint", "")
+            for src in sources
         )
+        has_identify = any(
+            "identify" in src.get("endpoint", "")
+            for src in sources
+        )
+
+        if has_enrich_desc:
+            citation_str = f"company enrich: description{sim_marker}"
+            claim_text = (
+                f"Verified supplier profile, status {s.get('product_line_status', 'CONFIRMED')}, "
+                f"confidence {s.get('confidence', 0.95):.0%}"
+            )
+        elif has_identify:
+            citation_str = f"company identify: primary_domain{sim_marker}"
+            claim_text = (
+                f"Identified candidate supplier, status {s.get('product_line_status', 'HUMAN_OR_SIMULATED')}, "
+                f"confidence {s.get('confidence', 0.5):.0%}"
+            )
+        else:
+            citation_str = f"candidate search: primary_domain{sim_marker}" if sources else f"unverified; no sources{sim_marker}"
+            claim_text = (
+                f"Unverified candidate supplier, status {s.get('product_line_status', 'HUMAN_OR_SIMULATED')}, "
+                f"confidence {s.get('confidence', 0.0):.0%}"
+            )
+
         shortlist_suppliers.append({
             "label": s.get("display_label", "Supplier"),
             "claims": [
