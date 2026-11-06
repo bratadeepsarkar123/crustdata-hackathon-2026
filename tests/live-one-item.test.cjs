@@ -61,20 +61,22 @@ test('request uses the company search endpoint with the two required headers and
   assert.deepStrictEqual(body.fields, ['basic_info']);
 });
 
-test('display never shows company names, domains, locations, headcount or founding details', () => {
+test('display shows the company name, website and full self-reported description from the live response', () => {
   const { text } = render(SAMPLE, { query: 'magnet maker' });
-  for (const s of ['Acme Magnetics', 'Beta Rare Earth Co', 'Gamma Works', 'acmemagnetics', 'betarare', 'gammaworks',
-    'http', 'www.', '.com', '.in', 'Shandong', 'headquartered', 'employees', '500', 'founded']) {
-    assert.ok(!text.includes(s), `leaked: ${s}`);
+  for (const s of ['Supplier 1: Acme Magnetics Pvt Ltd', 'Website: acmemagnetics.com',
+    'Description: Sintered NdFeB magnet maker offering custom shapes, fast turnaround and ISO 9001 quality system.',
+    'Supplier 2: Beta Rare Earth Co', 'Website: betarare.in',
+    'Description: Beta Rare Earth is headquartered in Shandong and has 500 employees making permanent magnets.']) {
+    assert.ok(text.includes(s), `missing: ${s}`);
   }
 });
 
-test('safe description is shown, unsafe ones are withheld, missing ones are reported', () => {
+test('missing name, website or description are reported, not guessed', () => {
   const { text, count } = render(SAMPLE, { query: 'magnet maker' });
   assert.strictEqual(count, 3);
-  assert.ok(text.includes('Supplier 1: Sintered NdFeB magnet maker offering custom shapes'));
-  assert.ok(text.includes('Supplier 2: description withheld (no sentence free of name, location, size or link)'));
-  assert.ok(text.includes('Supplier 3: no self-reported description returned'));
+  assert.ok(text.includes('Supplier 3: Gamma Works'));
+  assert.ok(text.includes('Website: gammaworks.in'));
+  assert.ok(text.includes('Description: no self-reported description returned'));
 });
 
 test('every citation line carries the LIVE self-reported label, and no simulated label is used', () => {

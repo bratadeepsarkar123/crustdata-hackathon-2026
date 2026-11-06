@@ -6,9 +6,9 @@
 //   $env:CRUSTDATA_API_KEY = "<your key>"
 //   node src/demo/live-one-item.cjs --query "sintered neodymium magnet manufacturer" --limit 5
 //
-// Display rule (README): supplier cards never show names, domains, locations, headcount or
-// company values. Only the company's own self-reported description is shown, and only when it
-// carries no name, link, location or size detail.
+// Display (owner decision, 2026-11-06): each supplier shows the company name, website and the
+// full self-reported description exactly as the live response returned it. Nothing is filtered.
+// Terms for showing company names are not confirmed. Check the Crustdata data-export terms before publishing.
 
 const ENDPOINT = 'https://api.crustdata.com/company/search';
 const API_VERSION = '2025-11-01';
@@ -94,9 +94,14 @@ function render(json, { query }) {
   }
   lines.push('Shortlist:');
   companies.forEach((c, i) => {
-    const desc = safeDescription(c);
-    lines.push(`  Supplier ${i + 1}: ${desc || 'no self-reported description returned'}`);
-    lines.push(`    cited: basic_info.description ${LIVE_SOURCE}`);
+    const bi = c && typeof c.basic_info === 'object' && c.basic_info ? c.basic_info : {};
+    const name = typeof bi.name === 'string' && bi.name.trim() ? bi.name.trim() : 'name not returned';
+    const domain = typeof bi.primary_domain === 'string' && bi.primary_domain.trim() ? bi.primary_domain.trim() : 'website not returned';
+    const desc = typeof bi.description === 'string' && bi.description.trim() ? bi.description.trim() : 'no self-reported description returned';
+    lines.push(`  Supplier ${i + 1}: ${name}`);
+    lines.push(`    Website: ${domain}`);
+    lines.push(`    Description: ${desc}`);
+    lines.push(`    cited: basic_info.name, basic_info.primary_domain, basic_info.description ${LIVE_SOURCE}`);
   });
   lines.push('');
   lines.push('Still not verified: minimum order size, sole-source status, thin 3 mm capability.');
