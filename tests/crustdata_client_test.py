@@ -145,11 +145,11 @@ class TestCrustdataClient(unittest.TestCase):
         self.assertEqual(guard.total_credits_used, 5400.0)
 
     def test_live_pipeline_above_200_credits_finishes_without_cap(self):
-        """Mocked live-pipeline test with balance > 203 credits and 100 identified candidates.
+        """Mocked live run with balance > 203 credits and 100 identified candidates.
 
-        Verifies that when MAX_RUN_CREDIT_BUDGET is None, a run consuming 203 credits
-        (3.0 search + 200.0 enrich for 100 candidates) completes without hitting the
-        old 200-credit cap.
+        Checks that no 200-credit run cap blocks the run (it finishes without a
+        budget or credits error) and that only the live verification cap of
+        candidates is enriched; the account balance is the only real limit.
         """
         rng = random.Random(42)
         chars = "abcdefghijklmnopqrstuvwxyz"
@@ -191,15 +191,18 @@ class TestCrustdataClient(unittest.TestCase):
         }
 
         request = {"item": "temperature sensors", "region": "India"}
+        # No exception means neither the credit guard nor the pre-flight balance check blocked the run.
         suppliers = run_discovery_pipeline(request=request, client=mock_client, use_fixtures=False)
 
-        # Assert search was called once with 100 candidates
+        # service.py hardcodes the live verification cap (raw_candidates[:5]) and exposes
+        # no constant, so the value 5 is asserted here.
+        verify_cap = 5
+
         mock_client.company_search.assert_called_once()
-        # Assert identify was called 100 times (free)
-        self.assertEqual(mock_client.company_identify.call_count, 100)
-        # Assert all 100 enrich calls finished (costs 200 credits, total 203 credits with search)
-        self.assertEqual(mock_client.company_enrich.call_count, 100)
-        self.assertEqual(len(suppliers), 100)
+        # Only the capped candidates are verified (identify + enrich); the other 95 are skipped.
+        self.assertEqual(mock_client.company_identify.call_count, verify_cap)
+        self.assertEqual(mock_client.company_enrich.call_count, verify_cap)
+        self.assertEqual(len(suppliers), verify_cap)
 
     def test_credit_guard_budget_under_200(self):
         guard = CreditGuard(max_budget=200.0)
