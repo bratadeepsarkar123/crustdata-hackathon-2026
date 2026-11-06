@@ -126,7 +126,7 @@ python demo_citations.py --live
 - **Credit Consumption**:
   - Starting balance: 15,192.70
   - Ending balance: 15,179.70
-  - Total credits consumed: 13.00 credits (Strictly < 200 credits budget limit).
+  - Total credits consumed: 13.00 credits (governed by account balance; cap removed per PR #13).
 - **Option C Display Rule**:
   - 100% verified. Screen and JSON projections output only neutral labels (`Supplier 1` to `Supplier 5`) and citations (`Source: Crustdata` with endpoint and field).
   - Real names, domains, and metrics kept exclusively in `discovery_internal_audit.log` (git-ignored).
