@@ -17,7 +17,7 @@ Person 2's assigned scope (Steps 2, 3, and 4) is **fully implemented, tested, an
 2. **Step 3 (Verify):** Two-stage verification calling `POST /company/identify` (free) first, then `POST /company/enrich` (2 credits) for `headcount`, `locations`, and `basic_info.description`. Includes an explicit code guard preventing identify from requesting plan-gated fields. Marks product line as `CONFIRMED` (description present) or `HUMAN_OR_SIMULATED` (description empty).
 3. **Step 4 (Dedupe):** Normalizes domains and company names, calculates string & token similarity, merges duplicate entities, combines citations, and computes match confidence.
 4. **Display Rule (Option C):** Enforces neutral labels (`Supplier 1`, `Supplier 2`, ...) and citations only (*"Source: Crustdata (endpoint, field)"*). Real names and metrics are strictly contained within `_internal` fields.
-5. **Security & Credits:** Zero API keys committed or printed. Key read exclusively from environment (`CRUSTDATA_API_KEY`) with git-ignore validation. Live calls disabled by default (`allow_live=False`); `CreditGuard` ensures the live run stays strictly under 200 credits (estimated run is ~10.60 credits).
+5. **Security & Credits:** Zero API keys committed or printed. Key read exclusively from environment (`CRUSTDATA_API_KEY`) with git-ignore validation. Live calls disabled by default (`allow_live=False`); `CreditGuard` ensures the live run stays strictly within available account credits without arbitrary hard-caps (estimated run is ~10.60 credits).
 
 ---
 
@@ -83,7 +83,7 @@ All files are strictly within Person 2's ownership scope:
 | Path | Purpose |
 |---|---|
 | `src/crustdata/client.py` | API client with headers, 429 backoff (`Retry-After`), 402/403 immediate stop, and key masking. |
-| `src/crustdata/credits.py` | `GET /account/credits` checker, batch cost estimation, and `CreditGuard` (< 200 budget). |
+| `src/crustdata/credits.py` | `GET /account/credits` checker, batch cost estimation, and `CreditGuard` (account balance budget). |
 | `src/crustdata/exceptions.py` | Custom error classes for clean diagnostics. |
 | `src/discovery/fixtures.py` | Realistic Industrial Temperature Sensor supplier fixtures (India & global). |
 | `src/discovery/candidate_search.py` | Step 2 ranked search, location hard limits, and autocomplete. |

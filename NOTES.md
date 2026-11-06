@@ -131,3 +131,26 @@ python demo_citations.py --live
   - 100% verified. Screen and JSON projections output only neutral labels (`Supplier 1` to `Supplier 5`) and citations (`Source: Crustdata` with endpoint and field).
   - Real names, domains, and metrics kept exclusively in `discovery_internal_audit.log` (git-ignored).
 - **Test Results**: All 34 Crustdata unit tests passing (`python -m unittest discover -s tests -p "crustdata*.py"`).
+
+---
+
+## 6. One-Item Discovery & Option C Runner (2026-11-06)
+- **Target Item**: Neodymium speaker magnet, 3 mm thick, 1000 pcs, US buyer, sole supplier in China, very small MOQ.
+- **Entrypoints**:
+  - `python src/discovery/option_c_run.py` (or `python option_c_run.py`)
+  - CLI supports: `--item`, `--quantity`, `--unit`, `--spec`, `--buyer-location`, `--supplier-region`, `--moq`, `--live`, `--shortlist-json`, `--internal-log-file`.
+- **Offline & Live Modes**:
+  - Offline default: Uses simulated fixtures in `src/discovery/fixtures.py` (5 China neodymium magnet suppliers).
+  - Live mode: Activated with `--live` flag; checks account credits pre-flight and queries live Crustdata API.
+- **Option C Compliance**:
+  - Screen output displays ONLY neutral labels (`Supplier 1` to `Supplier 5`) and citations.
+  - Zero company names, domain URLs, or private metrics appear on screen or stdout.
+  - Confidential identifiers logged to `discovery_internal_audit.log` (git-ignored).
+- **Shortlist Schema Parity & Strict Units**:
+  - `--shortlist-json` enforces strict schema parity with `samples/one-item/supplier-shortlist.json` (`quantity_pcs`).
+  - Non-pcs units (e.g. `--unit kg`) fail closed with a clean error message and non-zero exit code, protecting the desk contract.
+  - Shortlist claim citations dynamically reflect actual obtained sources (`company enrich: description` if enriched, `company identify` if identified only, `unverified` if failed).
+- **Test Suite (57 Tests Passing)**:
+  - 15 unit tests in `tests/crustdata_one_item_test.py` covering one-item pipeline, Option C compliance, CLI invocation, shortlist JSON bridging, non-pcs unit rejection (`test_shortlist_payload_rejects_non_pcs_unit`, `test_cli_shortlist_json_rejects_non_pcs_unit`), actual source citations, and strict absence assertions for private company attributes (names, locations, headcounts, founding years).
+  - Total Python suite: 57 tests passing (`python -m unittest discover -s tests -p "crustdata*.py"`).
+  - Total Node suite: 32 tests passing (`node --test ...`).

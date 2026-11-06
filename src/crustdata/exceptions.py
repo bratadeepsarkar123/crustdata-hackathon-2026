@@ -43,5 +43,5 @@ class CrustdataSecurityError(CrustdataAPIError):
 
 
 class CrustdataBudgetExceededError(CrustdataAPIError):
-    """Batch operation exceeds the safety credit budget (max 200 credits)."""
+    """Batch operation exceeds the safety credit budget."""
     pass

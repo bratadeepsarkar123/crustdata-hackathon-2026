@@ -134,7 +134,6 @@ class TestCrustdataClient(unittest.TestCase):
         # 20 search results (0.60) + 5 identifies (free) + 5 enriches (10.0) + 1 autocomplete (free) = 10.60
         cost = calculate_batch_cost(search_results_count=20, identify_count=5, enrich_count=5, autocomplete_count=1)
         self.assertEqual(cost, 10.60)
-        self.assertLess(cost, 200.0)
 
     def test_credit_guard_has_no_run_cap_by_default(self):
         guard = CreditGuard()
@@ -204,14 +203,14 @@ class TestCrustdataClient(unittest.TestCase):
         self.assertEqual(mock_client.company_enrich.call_count, verify_cap)
         self.assertEqual(len(suppliers), verify_cap)
 
-    def test_credit_guard_budget_under_200(self):
-        guard = CreditGuard(max_budget=200.0)
+    def test_credit_guard_custom_budget_limit(self):
+        guard = CreditGuard(max_budget=150.0)
         guard.record_usage(10.6, "batch run")
         self.assertEqual(guard.total_credits_used, 10.6)
 
-        # Propose run that exceeds 200
+        # Propose run that exceeds custom budget
         with self.assertRaises(CrustdataBudgetExceededError):
-            guard.estimate_and_check(190.0)
+            guard.estimate_and_check(145.0)
 
 
     @patch.dict(os.environ, {"CRUSTDATA_API_KEY": "env_override_key_999"})
