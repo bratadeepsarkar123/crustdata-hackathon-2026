@@ -54,16 +54,29 @@ def verify_file_git_ignored(filepath: str) -> bool:
 
 
 def load_api_key_from_env(env_var: str = "CRUSTDATA_API_KEY", env_file: Optional[str] = None) -> Optional[str]:
-    """Read API key only from local environment, verifying any secret file is git-ignored."""
-    # If a secret file path is specified, confirm it is git-ignored before reading
-    if env_file and os.path.exists(env_file):
-        if not verify_file_git_ignored(env_file):
+    """Read API key only from local environment, verifying any secret file is git-ignored.
+
+    Prioritizes an explicitly set environment variable, falling back to an
+    automatically discovered or specified git-ignored .env file.
+    """
+    # 1. Explicit environment variable takes precedence
+    key = os.environ.get(env_var) or os.environ.get("CRUSTDATA_KEY")
+    if key:
+        return key
+
+    # 2. Fall back to .env file if specified or found locally
+    target_file = env_file
+    if target_file is None and os.path.exists(".env"):
+        target_file = ".env"
+
+    if target_file and os.path.exists(target_file):
+        if not verify_file_git_ignored(target_file):
             raise CrustdataSecurityError(
-                f"Security violation: File '{env_file}' containing credentials is NOT git-ignored! "
+                f"Security violation: File '{target_file}' containing credentials is NOT git-ignored! "
                 "Refusing to read secrets from an unignored file."
             )
         # Parse simple KEY=VALUE
-        with open(env_file, "r", encoding="utf-8") as f:
+        with open(target_file, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#") and "=" in line:
@@ -71,8 +84,7 @@ def load_api_key_from_env(env_var: str = "CRUSTDATA_API_KEY", env_file: Optional
                     if k.strip() == env_var:
                         return v.strip().strip("'\"")
 
-    key = os.environ.get(env_var) or os.environ.get("CRUSTDATA_KEY")
-    return key
+    return None
 
 
 class CrustdataClient:
@@ -131,7 +143,7 @@ class CrustdataClient:
         endpoint: str,
         params: Optional[Dict[str, Any]] = None,
         json_data: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+    ) -> Any:
         """Send HTTP request to Crustdata API with retry on 429 and hard stop on 402/403."""
         if not self.allow_live:
             raise CrustdataAPIError(
@@ -233,7 +245,7 @@ class CrustdataClient:
     def company_search(
         self,
         query: Optional[str] = None,
-        filters: Optional[List[Dict[str, Any]]] = None,
+        filters: Optional[Any] = None,
         limit: int = 100,
         ranked: bool = True,
     ) -> Dict[str, Any]:
@@ -249,7 +261,20 @@ class CrustdataClient:
             payload["query"] = query
 
         if filters:
-            payload["filters"] = filters
+            if isinstance(filters, list):
+                conditions = []
+                for f in filters:
+                    if isinstance(f, dict):
+                        field = f.get("field")
+                        val = f.get("value")
+                        if not field:
+                            ft = f.get("filter_type")
+                            field = "locations.country" if ft == "CURRENT_LOCATION" else ("basic_info.industries" if ft == "INDUSTRY" else f.get("type", "locations.country"))
+                        v = val[0] if isinstance(val, list) and len(val) == 1 else val
+                        conditions.append({"field": field, "type": "=", "value": v})
+                payload["filters"] = {"op": "and", "conditions": conditions}
+            elif isinstance(filters, dict):
+                payload["filters"] = filters
 
         return self._request("POST", "/company/search", json_data=payload)
 
@@ -266,7 +291,7 @@ class CrustdataClient:
         names: Optional[List[str]] = None,
         domains: Optional[List[str]] = None,
         fields: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+    ) -> Any:
         """POST /company/identify (Free).
 
         SAFETY GUARD: Master handoff section 7 specifies that headcount and locations
@@ -281,10 +306,11 @@ class CrustdataClient:
                 )
 
         payload: Dict[str, Any] = {}
-        if names:
-            payload["names"] = names
+        # Give ONE identifier type per call per Crustdata API rules
         if domains:
             payload["domains"] = domains
+        elif names:
+            payload["names"] = names
         if fields:
             payload["fields"] = fields
 
@@ -295,16 +321,16 @@ class CrustdataClient:
         company_id: Optional[int] = None,
         domain: Optional[str] = None,
         fields: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+    ) -> Any:
         """POST /company/enrich (Costs 2 credits per match).
 
         Used for headcount, locations, and basic_info.description.
         """
         payload: Dict[str, Any] = {}
         if company_id is not None:
-            payload["crustdata_company_id"] = company_id
+            payload["crustdata_company_ids"] = [company_id]
         elif domain is not None:
-            payload["domain"] = domain
+            payload["domains"] = [domain]
         else:
             raise ValueError("Either company_id or domain must be specified for company/enrich.")
 

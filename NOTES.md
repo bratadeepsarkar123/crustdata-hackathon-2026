@@ -1,4 +1,4 @@
-﻿# Issue #6 — acceptance checks and verification plan
+# Issue #6 — acceptance checks and verification plan
 
 Status: **DONE** for the offline steps 1–7 harness and IP0 contracts/fixtures. Acceptance plan was recorded before implementation. Source of truth: `docs/handoffs/MASTER-HANDOFF-supplier.md`, sections 4–6, and the assigned issue #6 task brief. The integrator confirmed issue #6 and related issue bodies using the signed-in owner account with process-scoped authentication; no account switch was made.
 
@@ -46,7 +46,7 @@ Final verification: `node --test tests/e2e.cjs src/po/writer.test.cjs src/state/
 Known limitation: this is fixture-only. Discovery, verification, real dedupe, WhatsApp, policy logic, and human exception routing are not integrated here. No real supplier contact or Crustdata request occurs.
 # Engineering Notes - Person 2 (Discovery & Crustdata)
 **Owner:** Aditya Chittora (`AdityaChittora`)  
-**Issue:** #7 | **Branch:** `feat/issue-7-discovery` | **PR:** #9  
+**Issue:** #7 | **Branch:** `feat/issue-7-live-run` | **PR:** #9  
 **Source of Truth:** `docs/handoffs/MASTER-HANDOFF-supplier.md` & `src/contracts/index.cjs` (PR #10)
 
 ---
@@ -84,24 +84,50 @@ Known limitation: this is fixture-only. Discovery, verification, real dedupe, Wh
 
 ## 2. What Is Fixture-Only
 - All default tests and demo runs operate offline using realistic fixtures in `src/discovery/fixtures.py` (5 industrial temperature sensor manufacturers: Alpha, Bravo, Charlie, Delta Pyro, Echo).
-- The demo runs on fixtures only. Do not start live calls. Wait for the owner's go before anything live.
-- No API keys or network connection required to run tests or the demo script.
+- No API keys or network connection required to run tests or the fixture demo script.
 
 ---
 
 ## 3. What Needs the Owner's Go for Live Calls
 - Setting `CRUSTDATA_API_KEY` in local environment.
-- Owner approval for the single live Crustdata run (IP3).
-- Verification with `GET /account/credits` before triggering live calls (run budget is ~10.60 credits, well under the 200 limit).
+- Owner approval for live Crustdata runs (granted by @bratadeepsarkar123 in Issue #7, Comment #6672614458).
+- Verification with `GET /account/credits` before triggering live calls.
 
 ---
 
-## 4. Test Suite (33 Tests Passing)
+## 4. Test Suite (34 Tests Passing)
 Run all Person 2 tests:
 ```powershell
 python -m unittest discover -s tests -p "crustdata*.py"
 ```
-Execute demo citation script:
+Execute demo citation script (fixture mode):
 ```powershell
 python demo_citations.py
 ```
+Execute demo citation script (live Crustdata mode):
+```powershell
+python demo_citations.py --live
+```
+
+---
+
+## 5. Live Crustdata Run (Completed 2026-11-06)
+- **Authorization**: Explicitly approved by owner @bratadeepsarkar123 on Issue #7 (Comment #6672614458).
+- **Execution Command**: `python demo_citations.py --live`
+- **Pre-flight Credit Check (`GET /account/credits`)**: 15,192.70 credits available.
+- **Ranked Candidate Search (`POST /company/search`)**:
+  - Query: 'industrial temperature sensors', Location filter: India.
+  - Returned 100 raw candidate companies.
+- **Free Company Identify (`POST /company/identify`)**:
+  - Identified top candidate suppliers by domain/name without requesting headcount/locations.
+- **Enrichment by Company ID (`POST /company/enrich`)**:
+  - Enriched top 5 candidates for `headcount.total`, `locations.headquarters`, and `basic_info.description` (2 credits/match).
+  - All 5 candidate descriptions confirmed (`product_line_status: CONFIRMED`).
+- **Credit Consumption**:
+  - Starting balance: 15,192.70
+  - Ending balance: 15,179.70
+  - Total credits consumed: 13.00 credits (governed by account balance; cap removed per PR #13).
+- **Option C Display Rule**:
+  - 100% verified. Screen and JSON projections output only neutral labels (`Supplier 1` to `Supplier 5`) and citations (`Source: Crustdata` with endpoint and field).
+  - Real names, domains, and metrics kept exclusively in `discovery_internal_audit.log` (git-ignored).
+- **Test Results**: All 34 Crustdata unit tests passing (`python -m unittest discover -s tests -p "crustdata*.py"`).

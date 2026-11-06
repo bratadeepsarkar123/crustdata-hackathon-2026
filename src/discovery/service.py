@@ -29,6 +29,7 @@ def run_discovery_pipeline(
     use_fixtures: bool = True,
     industry_filter: Optional[str] = None,
     credit_guard: Optional[CreditGuard] = None,
+    max_candidates_to_verify: Optional[int] = None,
 ) -> List[Dict[str, Any]]:
     """Execute complete Discovery pipeline (Steps 2, 3, 4).
 
@@ -80,9 +81,15 @@ def run_discovery_pipeline(
     )
     logger.info("Found %d candidate suppliers in Step 2", len(raw_candidates))
 
+    candidates_to_verify = raw_candidates
+    if max_candidates_to_verify is not None:
+        candidates_to_verify = raw_candidates[:max_candidates_to_verify]
+    elif not use_fixtures:
+        candidates_to_verify = raw_candidates[:5]
+
     # Step 3: Verify each company
     verified_candidates = verify_all_candidates(
-        candidates=raw_candidates,
+        candidates=candidates_to_verify,
         client=client,
         use_fixtures=use_fixtures,
         credit_guard=guard,

@@ -11,4 +11,5 @@ if str(repo_root) not in sys.path:
 from src.discovery.demo_citation import run_demo
 
 if __name__ == "__main__":
-    sys.exit(run_demo())
+    live_flag = "--live" in sys.argv
+    sys.exit(run_demo(live=live_flag))

@@ -1,4 +1,4 @@
-"""Supplier verification via Crustdata identify (free) and enrich (2 credits) (Step 3)."""
+"""Verification of candidate suppliers using identify and enrich endpoints (Step 3)."""
 
 from __future__ import annotations
 
@@ -13,8 +13,8 @@ from src.crustdata.exceptions import (
     CrustdataPlanGatedError,
     CrustdataRateLimitError,
 )
-from .fixtures import FIXTURE_COMPANY_ENRICH_MAP, FIXTURE_COMPANY_IDENTIFY_MAP
 from .dedupe import normalize_domain
+from .fixtures import FIXTURE_COMPANY_IDENTIFY_MAP, FIXTURE_COMPANY_ENRICH_MAP
 
 logger = logging.getLogger("discovery.verify")
 
@@ -25,7 +25,7 @@ def verify_supplier(
     use_fixtures: bool = False,
     credit_guard: Optional[CreditGuard] = None,
 ) -> Dict[str, Any]:
-    """Step 3: Verify company candidate.
+    """Verify a single candidate company.
 
     Protocol per Section 4 & 7:
     1. Call POST /company/identify (Free).
@@ -67,8 +67,15 @@ def verify_supplier(
             )
             if credit_guard:
                 credit_guard.record_usage(0.0, "identify")
-            # Crustdata identify typically returns company info with crustdata_company_id
-            if isinstance(ident_res, dict):
+            if isinstance(ident_res, list) and ident_res:
+                matches = ident_res[0].get("matches", [])
+                if matches and isinstance(matches, list):
+                    company_id = matches[0].get("company_data", {}).get("crustdata_company_id")
+                elif "crustdata_company_id" in ident_res[0]:
+                    company_id = ident_res[0].get("crustdata_company_id")
+                else:
+                    company_id = None
+            elif isinstance(ident_res, dict):
                 company_id = ident_res.get("crustdata_company_id")
                 if not company_id and "results" in ident_res and ident_res["results"]:
                     company_id = ident_res["results"][0].get("crustdata_company_id")
@@ -84,12 +91,25 @@ def verify_supplier(
             try:
                 if credit_guard:
                     credit_guard.estimate_and_check(2.0)
-                enrich_data = client.company_enrich(
+                enrich_res = client.company_enrich(
                     company_id=company_id,
                     fields=["headcount", "locations", "basic_info"],
                 )
                 if credit_guard:
                     credit_guard.record_usage(2.0, "enrich")
+
+                if isinstance(enrich_res, list) and enrich_res:
+                    matches = enrich_res[0].get("matches", [])
+                    if matches and isinstance(matches, list):
+                        enrich_data = matches[0].get("company_data", {})
+                    elif "company_data" in enrich_res[0]:
+                        enrich_data = enrich_res[0]["company_data"]
+                    elif "headcount" in enrich_res[0] or "locations" in enrich_res[0] or "basic_info" in enrich_res[0]:
+                        enrich_data = enrich_res[0]
+                    else:
+                        enrich_data = None
+                elif isinstance(enrich_res, dict):
+                    enrich_data = enrich_res
             except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError, CrustdataBudgetExceededError):
                 # Critical API & budget errors must stop the entire run immediately
                 raise
@@ -153,13 +173,13 @@ def verify_all_candidates(
     credit_guard: Optional[CreditGuard] = None,
 ) -> List[Dict[str, Any]]:
     """Verify each candidate in the candidate list."""
-    results = []
-    for cand in candidates:
+    verified_list = []
+    for candidate in candidates:
         verified = verify_supplier(
-            candidate=cand,
+            candidate=candidate,
             client=client,
             use_fixtures=use_fixtures,
             credit_guard=credit_guard,
         )
-        results.append(verified)
-    return results
+        verified_list.append(verified)
+    return verified_list

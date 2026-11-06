@@ -136,5 +136,28 @@ class TestCrustdataDiscovery(unittest.TestCase):
         mock_client.company_autocomplete.assert_not_called()
 
 
+    def test_fixture_industry_autocomplete_resolves(self):
+        """Fixture-mode resolve_industry_filter must return matching suggestion."""
+        resolved = resolve_industry_filter(client=None, industry_query="measuring instruments", use_fixtures=True)
+        self.assertEqual(resolved, "Sensors & Measuring Instruments")
+
+    def test_autocomplete_reraises_402_and_halts_search(self):
+        """Autocomplete 402/403/429 errors must stop the run and never proceed to paid search."""
+        mock_client = MagicMock(spec=CrustdataClient)
+        mock_client.allow_live = True
+        mock_client.company_autocomplete.side_effect = CrustdataCreditsExhaustedError("HTTP 402: Credits exhausted")
+
+        request = {"item": "pressure sensors", "region": "India"}
+        with self.assertRaises(CrustdataCreditsExhaustedError):
+            search_candidate_suppliers(
+                request=request,
+                client=mock_client,
+                use_fixtures=False,
+                industry_filter="Sensors",
+            )
+        # Search must NOT follow
+        mock_client.company_search.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

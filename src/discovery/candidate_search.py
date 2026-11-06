@@ -1,4 +1,4 @@
-"""Candidate discovery using Crustdata ranked search, location limits and autocomplete (Step 2)."""
+"""Candidate supplier discovery using ranked search, location hard limits, and autocomplete (Step 2)."""
 
 from __future__ import annotations
 
@@ -22,27 +22,32 @@ def resolve_industry_filter(
     client: Optional[CrustdataClient],
     industry_query: str,
     use_fixtures: bool = False,
-) -> str:
-    """Resolve industry to Crustdata's closed set via company_autocomplete before filtering."""
+) -> Optional[str]:
+    """Resolve industry query to canonical closed-set value using company_autocomplete before filtering."""
     if use_fixtures or not client or not client.allow_live:
-        for suggestion in FIXTURE_INDUSTRY_AUTOCOMPLETE["suggestions"]:
-            if industry_query.lower() in suggestion.lower():
-                return suggestion
-        return FIXTURE_INDUSTRY_AUTOCOMPLETE["suggestions"][0]
+        suggestions = FIXTURE_INDUSTRY_AUTOCOMPLETE.get("suggestions", []) or FIXTURE_INDUSTRY_AUTOCOMPLETE.get("results", [])
+        for sug in suggestions:
+            val = sug.get("value") or sug.get("label") if isinstance(sug, dict) else sug
+            if industry_query.lower() in str(val).lower():
+                return str(val)
+        first = suggestions[0] if suggestions else None
+        return str(first.get("value") or first.get("label") or first) if isinstance(first, dict) else (str(first) if first else None)
 
     try:
         res = client.company_autocomplete(query=industry_query)
-        suggestions = res.get("suggestions") or res.get("results") or []
-        if suggestions:
-            if isinstance(suggestions[0], dict):
-                return suggestions[0].get("value") or suggestions[0].get("name") or industry_query
-            return str(suggestions[0])
-    except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError):
+        results = res.get("results") or res.get("suggestions") or []
+        if results and isinstance(results, list):
+            first = results[0]
+            if isinstance(first, dict):
+                return str(first.get("value") or first.get("label") or first)
+            return str(first)
+    except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError, CrustdataBudgetExceededError):
+        # Stop-the-run errors must re-raise immediately; discovery must never proceed into paid search
         raise
     except Exception as exc:
-        logger.warning("Industry autocomplete resolution failed: %s; falling back to original", exc)
+        logger.warning("company_autocomplete failed for '%s': %s", industry_query, exc)
 
-    return industry_query
+    return None
 
 
 def search_candidate_suppliers(
@@ -105,7 +110,7 @@ def search_candidate_suppliers(
                 limit=100,
                 ranked=True,
             )
-            raw_candidates = res.get("results") or res.get("companies") or []
+            raw_candidates = res.get("companies") or res.get("results") or []
             if credit_guard and raw_candidates:
                 credit_guard.record_usage(0.03 * len(raw_candidates), "search")
         except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError, CrustdataBudgetExceededError):
@@ -126,7 +131,7 @@ def search_candidate_suppliers(
                     limit=100,
                     ranked=False,
                 )
-                raw_candidates = res.get("results") or res.get("companies") or []
+                raw_candidates = res.get("companies") or res.get("results") or []
                 if credit_guard and raw_candidates:
                     credit_guard.record_usage(0.03 * len(raw_candidates), "search_fallback")
             except (CrustdataCreditsExhaustedError, CrustdataPlanGatedError, CrustdataRateLimitError, CrustdataBudgetExceededError):
@@ -138,12 +143,22 @@ def search_candidate_suppliers(
     # Map raw candidates to initial candidate supplier records
     candidates: List[Dict[str, Any]] = []
     for item in raw_candidates[:100]:
+        bi = item.get("basic_info") if isinstance(item.get("basic_info"), dict) else item
+        name = bi.get("name") or item.get("name") or "Unknown Supplier"
+        domain = bi.get("primary_domain") or item.get("domain") or bi.get("domain") or ""
+        year_founded = bi.get("year_founded") or item.get("year_founded")
+        
+        loc_obj = item.get("locations")
+        hq = item.get("location")
+        if not hq and isinstance(loc_obj, dict):
+            hq = loc_obj.get("headquarters") or loc_obj.get("country")
+
         cand = {
-            "name_internal": item.get("name", "Unknown Supplier"),
-            "primary_domain": item.get("domain", ""),
-            "year_founded": item.get("year_founded"),
+            "name_internal": name,
+            "primary_domain": domain,
+            "year_founded": year_founded,
             "industry": item.get("industry", resolved_industry or "Industrial Equipment"),
-            "headquarters_internal": item.get("location", ""),
+            "headquarters_internal": hq or "",
             "headcount_total_internal": None,  # Will be fetched on enrich
             "product_line_status": "HUMAN_OR_SIMULATED",  # Verified in Step 3
             "sources": [
@@ -153,4 +168,5 @@ def search_candidate_suppliers(
         }
         candidates.append(cand)
 
+    logger.info("Retrieved %d candidates after applying hard limits and rank threshold", len(candidates))
     return candidates
